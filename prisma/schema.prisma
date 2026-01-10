@@ -1,0 +1,107 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  nickname  String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participations MatchParticipant[]
+
+  @@map("players")
+}
+
+model DeviceConfig {
+  id          Int      @id @default(1)
+  calibration String   @default("{}") // JSON
+  preferences String   @default("{}") // JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("device_configs")
+}
+
+model Match {
+  id        String    @id @default(uuid())
+  gameId    String
+  variant   String    // JSON
+  format    String    // JSON
+  status    String
+  winnerId  String?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  teams        MatchTeam[]
+  participants MatchParticipant[]
+  throws       Throw[]
+
+  @@map("matches")
+}
+
+model MatchTeam {
+  id      String @id @default(uuid())
+  matchId String
+  name    String?
+  score   Int    @default(0)
+  rank    Int?
+
+  match        Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchMembers MatchParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("match_teams")
+}
+
+model MatchParticipant {
+  id       String  @id @default(uuid())
+  matchId  String
+  teamId   String?
+  playerId String
+  score    Int     @default(0)
+  rank     Int?
+
+  match  Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  team   MatchTeam? @relation(fields: [teamId], references: [id])
+  player Player     @relation(fields: [playerId], references: [id])
+  throws Throw[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("match_participants")
+}
+
+model Throw {
+  id            String   @id @default(uuid())
+  matchId       String
+  participantId String
+  roundIndex    Int
+  throwIndex    Int
+  segment       Int
+  multiplier    Int
+  points        Int
+  x             Float
+  y             Float
+  isBust        Boolean
+  isWin         Boolean
+  isValid       Boolean
+  timestamp     DateTime @default(now())
+
+  match       Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  participant MatchParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([participantId])
+  @@map("throws")
+}

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: dards-dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:/app/prisma/dev.db
+    command: pnpm dev
+    networks:
+      - dards-dev-network
+    # Healthcheck is simpler in dev, just check the port is open or respond
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dards-dev-network:
+    driver: bridge
