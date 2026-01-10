@@ -109,7 +109,9 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                 <div className="grid gap-6 py-4">
                     {/* Game Type Selection */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Game Mode</label>
+                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Game Mode
+                        </label>
                         <div className="grid grid-cols-3 gap-3">
                             {(["x01", "cricket", "round_the_clock", "killer", "shanghai", "high_score"] as GameType[]).map((type) => (
                                 <div
@@ -118,7 +120,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                     className={cn(
                                         "flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer",
                                         "transition-all hover:bg-accent",
-                                        gameType === type ? "border-primary bg-accent/50" : "border-transparent bg-secondary"
+                                        gameType === type ? "border-primary bg-accent/50" : "border-transparent bg-secondary",
                                     )}
                                 >
                                     <span className="font-bold uppercase">{type.replace(/_/g, " ")}</span>
@@ -189,7 +191,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                         onClick={() => handlePlayerToggle(player.id)}
                                         className={cn(
                                             "flex items-center gap-2 p-3 rounded-md border cursor-pointer select-none transition-colors",
-                                            selectedPlayerIds.includes(player.id) ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+                                            selectedPlayerIds.includes(player.id) ? "border-primary bg-primary/10" : "border-border hover:bg-accent",
                                         )}
                                     >
                                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">

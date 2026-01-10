@@ -9,14 +9,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <span className="font-bold">Admin Panel</span>
                 </div>
                 <nav className="flex-1 space-y-1 p-4">
-                    <a href="/players" className="flex items-center gap-3 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium hover:bg-slate-800/80">
+                    <a
+                        href="/players"
+                        className="flex items-center gap-3 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium hover:bg-slate-800/80"
+                    >
                         <Users className="h-4 w-4" />
                         Players
                     </a>
                     <a
                         href="/matches"
                         className={
-                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 " + "hover:bg-slate-800 hover:text-slate-50"
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 " +
+                            "hover:bg-slate-800 hover:text-slate-50"
                         }
                     >
                         <History className="h-4 w-4" />
@@ -25,7 +29,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <a
                         href="/rankings"
                         className={
-                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 " + "hover:bg-slate-800 hover:text-slate-50"
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 " +
+                            "hover:bg-slate-800 hover:text-slate-50"
                         }
                     >
                         <Trophy className="h-4 w-4" />
