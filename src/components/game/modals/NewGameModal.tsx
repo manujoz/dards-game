@@ -28,6 +28,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
 
     // Game specific configs
     const [x01StartScore, setX01StartScore] = useState<301 | 501 | 701 | 901>(501);
+    const [x01OutMode, setX01OutMode] = useState<"straight" | "double" | "master">("double");
     const [cricketMode, setCricketMode] = useState<"standard" | "cut_throat">("standard");
 
     useEffect(() => {
@@ -61,7 +62,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                     type: "x01",
                     startScore: x01StartScore,
                     inMode: "straight",
-                    outMode: "double",
+                    outMode: x01OutMode,
                 };
             } else if (gameType === "cricket") {
                 config = {
@@ -131,19 +132,51 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
 
                     {/* Game Options */}
                     {gameType === "x01" && (
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium">Start Score</label>
-                            <div className="flex gap-2">
-                                {[301, 501, 701, 901].map((score) => (
+                        <div className="space-y-4">
+                            <div className="space-y-3">
+                                <label className="text-sm font-medium">Start Score</label>
+                                <div className="flex gap-2">
+                                    {[301, 501, 701, 901].map((score) => (
+                                        <Button
+                                            key={score}
+                                            variant={x01StartScore === score ? "default" : "outline"}
+                                            onClick={() => setX01StartScore(score as 301 | 501 | 701 | 901)}
+                                            className="flex-1"
+                                        >
+                                            {score}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-sm font-medium">Out Mode</label>
+                                <div className="grid grid-cols-3 gap-2">
                                     <Button
-                                        key={score}
-                                        variant={x01StartScore === score ? "default" : "outline"}
-                                        onClick={() => setX01StartScore(score as 301 | 501 | 701 | 901)}
-                                        className="flex-1"
+                                        type="button"
+                                        variant={x01OutMode === "straight" ? "default" : "outline"}
+                                        onClick={() => setX01OutMode("straight")}
                                     >
-                                        {score}
+                                        Straight
                                     </Button>
-                                ))}
+                                    <Button
+                                        type="button"
+                                        variant={x01OutMode === "double" ? "default" : "outline"}
+                                        onClick={() => setX01OutMode("double")}
+                                    >
+                                        Double
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={x01OutMode === "master" ? "default" : "outline"}
+                                        onClick={() => setX01OutMode("master")}
+                                    >
+                                        Master
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    En Double/Master-Out, si llegas a 0 sin el multiplicador requerido, es BUST y vuelves al score inicial del turno.
+                                </p>
                             </div>
                         </div>
                     )}

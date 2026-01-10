@@ -5,6 +5,13 @@ import { Player } from "@prisma/client";
 import { MoreHorizontal, User } from "lucide-react";
 import { CreatePlayerDialog } from "./CreatePlayerDialog";
 
+const PLAYER_JOINED_DATE_FORMATTER = new Intl.DateTimeFormat("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+});
+
 interface PlayerListProps {
     initialPlayers: Player[];
 }
@@ -33,7 +40,6 @@ export function PlayerList({ initialPlayers }: PlayerListProps) {
                             <tr key={player.id} className="border-b transition-colors hover:bg-slate-50/50 last:border-0">
                                 <td className="p-4 font-medium align-middle">
                                     <div className="flex items-center gap-3">
-                                        {/* eslint-disable-next-line max-len */}
                                         <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                                             {player.avatarUrl ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
@@ -45,13 +51,7 @@ export function PlayerList({ initialPlayers }: PlayerListProps) {
                                         <span className="font-semibold text-slate-900">{player.nickname}</span>
                                     </div>
                                 </td>
-                                <td className="p-4 align-middle text-slate-500">
-                                    {new Date(player.createdAt).toLocaleDateString(undefined, {
-                                        year: "numeric",
-                                        month: "short",
-                                        day: "numeric",
-                                    })}
-                                </td>
+                                <td className="p-4 align-middle text-slate-500">{PLAYER_JOINED_DATE_FORMATTER.format(new Date(player.createdAt))}</td>
                                 <td className="p-4 text-right align-middle">
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
                                         <MoreHorizontal className="h-4 w-4" />

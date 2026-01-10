@@ -19,7 +19,7 @@ const eslintConfig = tseslint.config(
         rules: {
             quotes: ["error", "double"],
             indent: ["error", 4, { SwitchCase: 1 }],
-            "max-len": ["error", { code: 150 }],
+            "max-len": ["error", { code: 150, ignoreStrings: true, ignoreTemplateLiterals: true }],
             "no-console": ["error", { allow: ["warn", "error"] }],
             "react-hooks/exhaustive-deps": "off",
             "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
