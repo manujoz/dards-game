@@ -2,7 +2,7 @@
 
 import type { AdminSidebarProps } from "@/types/components/admin";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -12,6 +12,7 @@ import { BookOpen, History, Home, Shield, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LAST_GAME_URL_STORAGE_KEY = "dards:lastGameUrl";
+const LAST_GAME_URL_EVENT = "dards:lastGameUrl";
 
 function isSafeReturnTo(value: string): boolean {
     return value.trim().startsWith("/game");
@@ -25,9 +26,33 @@ function withReturnTo(path: string, returnTo: string): string {
     return qs ? `${base}?${qs}` : base;
 }
 
+function readStoredReturnTo(): string | null {
+    try {
+        const raw = window.sessionStorage.getItem(LAST_GAME_URL_STORAGE_KEY);
+        return raw && isSafeReturnTo(raw) ? raw : null;
+    } catch {
+        return null;
+    }
+}
+
 export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+
+    const storedReturnTo = useSyncExternalStore(
+        (onStoreChange) => {
+            const handler = () => onStoreChange();
+            window.addEventListener("storage", handler);
+            window.addEventListener(LAST_GAME_URL_EVENT, handler);
+
+            return () => {
+                window.removeEventListener("storage", handler);
+                window.removeEventListener(LAST_GAME_URL_EVENT, handler);
+            };
+        },
+        () => readStoredReturnTo(),
+        () => null,
+    );
 
     const returnToFromQuery = useMemo(() => {
         const raw = searchParams.get("returnTo");
@@ -38,20 +63,11 @@ export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
         if (!returnToFromQuery) return;
         try {
             window.sessionStorage.setItem(LAST_GAME_URL_STORAGE_KEY, returnToFromQuery);
+            window.dispatchEvent(new Event(LAST_GAME_URL_EVENT));
         } catch {
             // ignore
         }
     }, [returnToFromQuery]);
-
-    const storedReturnTo = useMemo(() => {
-        if (typeof window === "undefined") return null;
-        try {
-            const raw = window.sessionStorage.getItem(LAST_GAME_URL_STORAGE_KEY);
-            return raw && isSafeReturnTo(raw) ? raw : null;
-        } catch {
-            return null;
-        }
-    }, [pathname]);
 
     const returnTo = returnToFromQuery ?? storedReturnTo ?? "/game";
 

@@ -14,33 +14,39 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     const returnTo = typeof returnToRaw === "string" && isSafeReturnTo(returnToRaw) ? returnToRaw : "/game";
 
     return (
-        <main className="min-h-screen bg-slate-950 text-white p-6">
-            <div className="max-w-3xl mx-auto">
-                <h1 className="text-3xl font-black">Panel</h1>
-                <p className="text-slate-300 mt-2">Accesos rápidos para administrar jugadores, partidas y rankings.</p>
-
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Link href={returnTo} className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Volver al juego
-                    </Link>
-
-                    <Link href="/players" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Jugadores
-                    </Link>
-
-                    <Link href="/matches" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Partidas
-                    </Link>
-
-                    <Link href="/rankings" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Clasificación
-                    </Link>
-
-                    <Link href="/rules" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Reglas
-                    </Link>
-                </div>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Panel</h1>
+                <p className="text-slate-500">Accesos rápidos para administrar jugadores, partidas, rankings y reglas.</p>
             </div>
-        </main>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <QuickLink href={returnTo} title="Volver al juego" description="Regresa a la partida en curso." />
+                <QuickLink href="/players" title="Jugadores" description="Crear, editar y borrar jugadores." />
+                <QuickLink href="/matches" title="Partidas" description="Ver historial y estado de partidas." />
+                <QuickLink href="/rankings" title="Clasificación" description="Ranking por modo de juego." />
+                <QuickLink href="/rules" title="Reglas" description="Documentación de reglas por modo." />
+            </div>
+        </div>
+    );
+}
+
+interface QuickLinkProps {
+    href: string;
+    title: string;
+    description: string;
+}
+
+function QuickLink({ href, title, description }: QuickLinkProps) {
+    return (
+        <Link
+            href={href}
+            className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow"
+        >
+            <div className="flex flex-col gap-1">
+                <div className="text-base font-extrabold text-slate-900 group-hover:underline group-hover:underline-offset-4">{title}</div>
+                <div className="text-sm text-slate-600">{description}</div>
+            </div>
+        </Link>
     );
 }

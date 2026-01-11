@@ -1,5 +1,8 @@
 "use client";
 
+import type { DartboardCanvasMarker, DartboardCanvasProps } from "@/types/components/game";
+import type { CalibrationConfig } from "@/types/models/darts";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BOARD_DIMENSIONS_MM, SEGMENT_ORDER } from "@/lib/game/board-geometry";
@@ -7,17 +10,10 @@ import { transformCoordinates } from "@/lib/game/calibration";
 import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
 import { cn } from "@/lib/utils";
 
-import type { CalibrationConfig, Hit } from "@/types/models/darts";
-
-interface DartboardCanvasProps {
-    onThrow: (hit: Hit, coordinates: { x: number; y: number }) => void;
-    disabled?: boolean;
-}
-
 export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [lastHit, setLastHit] = useState<{ x: number; y: number } | null>(null);
+    const [hitMarkers, setHitMarkers] = useState<DartboardCanvasMarker[]>([]);
 
     const [size, setSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -290,11 +286,16 @@ export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasPr
         const boardCoords = transformCoordinates(clickX, clickY, config);
         const hit = mapCoordinatesToHit(boardCoords.x, boardCoords.y);
 
-        // Visual feedback (keep marker on screen for a moment)
-        setLastHit({ x: clickX, y: clickY });
+        const accepted = onThrow(hit, boardCoords);
+        if (!accepted) return;
 
-        // Pass result up
-        onThrow(hit, boardCoords);
+        // Solo pintamos marcador si el impacto está dentro de la diana (no MISS).
+        if (hit.multiplier !== 0) {
+            setHitMarkers((prev) => {
+                const next = [...prev, { x: clickX, y: clickY }];
+                return next.length > 3 ? next.slice(next.length - 3) : next;
+            });
+        }
     };
 
     return (
@@ -310,15 +311,16 @@ export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasPr
             <canvas ref={canvasRef} className="absolute inset-0" />
 
             {/* Hit Marker */}
-            {lastHit && (
+            {hitMarkers.map((m, index) => (
                 <div
+                    key={index}
                     className={cn(
-                        "absolute w-4 h-4 bg-green-500 rounded-full transform -translate-x-1/2 -translate-y-1/2",
+                        "absolute w-4 h-4 bg-emerald-400 rounded-full transform -translate-x-1/2 -translate-y-1/2",
                         "pointer-events-none shadow-lg border border-white",
                     )}
-                    style={{ left: lastHit.x, top: lastHit.y }}
+                    style={{ left: m.x, top: m.y }}
                 />
-            )}
+            ))}
         </div>
     );
 }
