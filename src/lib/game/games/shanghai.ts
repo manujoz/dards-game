@@ -61,15 +61,15 @@ export class ShanghaiGame implements GameLogic {
 
         return {
             gameType: "shanghai",
-            roundIndicator: `Round ${state.currentRound}/${config.rounds} (Aim: ${currentTarget})`,
-            headers: ["Score"],
+            roundIndicator: `Ronda ${state.currentRound}/${config.rounds} (Objetivo: ${currentTarget})`,
+            headers: ["Puntos"],
             rows: state.playerStates.map((ps) => {
                 const player = state.players.find((p) => p.id === ps.playerId)!;
                 const isWinner = state.winnerId === ps.playerId;
                 return {
                     playerId: ps.playerId,
                     playerName: player.name,
-                    score: isWinner ? "WIN" : ps.score,
+                    score: isWinner ? "GANÓ" : ps.score,
                     active: state.currentPlayerId === ps.playerId,
                     details: [],
                 };

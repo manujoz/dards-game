@@ -109,7 +109,7 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
                 setStep("complete");
                 setTimeout(() => onOpenChange(false), 1500);
             } else {
-                console.error("Failed to save calibration", res.message);
+                console.error("No se ha podido guardar la calibración", res.message);
                 setStep("intro"); // Retry
             }
         });
@@ -122,8 +122,8 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
                 onClick={handleScreenClick}
             >
                 <Target className="w-16 h-16 animate-pulse mb-8 text-red-500" />
-                <h2 className="text-3xl font-bold mb-4">{step === "center" ? "TOUCH THE BULLSEYE" : "TOUCH DOUBLE 20 (TOP)"}</h2>
-                <p className="text-xl opacity-80">Tap exactly on the {step === "center" ? "center" : "top double segment"} of the board</p>
+                <h2 className="text-3xl font-bold mb-4">{step === "center" ? "TOCA EL CENTRO" : "TOCA EL DOBLE 20 (ARRIBA)"}</h2>
+                <p className="text-xl opacity-80">Toca exactamente el {step === "center" ? "centro" : "doble superior"} de la diana</p>
                 <Button
                     variant="outline"
                     className="mt-12 text-black"
@@ -132,7 +132,7 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
                         reset();
                     }}
                 >
-                    Cancel
+                    Cancelar
                 </Button>
             </div>
         );
@@ -142,23 +142,23 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Screen Calibration</DialogTitle>
-                    <DialogDescription>Calibrate the touch input to match the physical dartboard projection.</DialogDescription>
+                    <DialogTitle>Calibración de pantalla</DialogTitle>
+                    <DialogDescription>Calibra el toque para que coincida con la proyección física de la diana.</DialogDescription>
                 </DialogHeader>
 
                 <div className="py-6 flex flex-col items-center justify-center text-center">
                     {step === "saving" && <Loader2 className="w-10 h-10 animate-spin text-primary" />}
-                    {step === "complete" && <div className="text-green-500 font-bold text-xl">Calibration Saved!</div>}
+                    {step === "complete" && <div className="text-green-500 font-bold text-xl">¡Calibración guardada!</div>}
                     {step === "intro" && (
                         <div className="space-y-4">
                             <p className="text-muted-foreground">
-                                This wizard will ask you to touch specific points on the board to align the input.
+                                Este asistente te pedirá que toques puntos específicos en la diana para alinear el toque.
                             </p>
                             <ul className="text-left text-sm space-y-2 list-disc pl-5">
-                                <li>Ensure you are in Fullscreen mode.</li>
-                                <li>Stand directly in front of the screen.</li>
+                                <li>Asegúrate de estar en modo pantalla completa.</li>
+                                <li>Colócate justo delante de la pantalla.</li>
                                 <li>
-                                    You will need to touch the <strong>Bullseye</strong> and <strong>Double 20</strong>.
+                                    Tendrás que tocar el <strong>centro</strong> y el <strong>doble 20</strong>.
                                 </li>
                             </ul>
                         </div>
@@ -169,9 +169,9 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
                     {step === "intro" ? (
                         <div className="flex w-full justify-between">
                             <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                                Close
+                                Cerrar
                             </Button>
-                            <Button onClick={() => setStep("center")}>Start Calibration</Button>
+                            <Button onClick={() => setStep("center")}>Iniciar calibración</Button>
                         </div>
                     ) : null}
                 </DialogFooter>

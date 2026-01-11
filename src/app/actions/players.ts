@@ -25,7 +25,7 @@ export async function createPlayer(input: PlayerInput): Promise<ActionResponse<P
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -37,7 +37,7 @@ export async function createPlayer(input: PlayerInput): Promise<ActionResponse<P
         if (existing) {
             return {
                 success: false,
-                message: "Nickname already taken",
+                message: "Ese apodo ya está en uso",
             };
         }
 
@@ -56,10 +56,10 @@ export async function createPlayer(input: PlayerInput): Promise<ActionResponse<P
             data: player,
         };
     } catch (error) {
-        console.error("Error creating player:", error);
+        console.error("Error al crear el jugador:", error);
         return {
             success: false,
-            message: "Failed to create player",
+            message: "No se ha podido crear el jugador",
         };
     }
 }
@@ -76,7 +76,7 @@ export async function createPlayerWithAvatar(formData: FormData): Promise<Action
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -88,7 +88,7 @@ export async function createPlayerWithAvatar(formData: FormData): Promise<Action
         if (existing) {
             return {
                 success: false,
-                message: "Nickname already taken",
+                message: "Ese apodo ya está en uso",
             };
         }
 
@@ -113,10 +113,10 @@ export async function createPlayerWithAvatar(formData: FormData): Promise<Action
             data: player,
         };
     } catch (error) {
-        console.error("Error creating player with avatar:", error);
+        console.error("Error al crear el jugador con avatar:", error);
         return {
             success: false,
-            message: "Failed to create player",
+            message: "No se ha podido crear el jugador",
         };
     }
 }
@@ -132,8 +132,8 @@ export async function updatePlayerWithAvatar(formData: FormData): Promise<Action
         if (!parsedId.success) {
             return {
                 success: false,
-                message: "Validation failed",
-                errors: { id: ["Invalid id"] },
+                message: "La validación ha fallado",
+                errors: { id: ["ID inválido"] },
             };
         }
 
@@ -144,7 +144,7 @@ export async function updatePlayerWithAvatar(formData: FormData): Promise<Action
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -156,7 +156,7 @@ export async function updatePlayerWithAvatar(formData: FormData): Promise<Action
         if (!existing) {
             return {
                 success: false,
-                message: "Player not found",
+                message: "No se ha encontrado el jugador",
             };
         }
 
@@ -170,7 +170,7 @@ export async function updatePlayerWithAvatar(formData: FormData): Promise<Action
         if (nicknameTaken) {
             return {
                 success: false,
-                message: "Nickname already taken",
+                message: "Ese apodo ya está en uso",
             };
         }
 
@@ -201,10 +201,10 @@ export async function updatePlayerWithAvatar(formData: FormData): Promise<Action
             data: updated,
         };
     } catch (error) {
-        console.error("Error updating player with avatar:", error);
+        console.error("Error al actualizar el jugador con avatar:", error);
         return {
             success: false,
-            message: "Failed to update player",
+            message: "No se ha podido actualizar el jugador",
         };
     }
 }
@@ -215,7 +215,7 @@ export async function deletePlayer(input: { playerId: string; performedByPlayerI
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -228,7 +228,7 @@ export async function deletePlayer(input: { playerId: string; performedByPlayerI
         if (!performer?.admin) {
             return {
                 success: false,
-                message: "Forbidden",
+                message: "No autorizado",
             };
         }
 
@@ -240,14 +240,14 @@ export async function deletePlayer(input: { playerId: string; performedByPlayerI
         if (!target) {
             return {
                 success: false,
-                message: "Player not found",
+                message: "No se ha encontrado el jugador",
             };
         }
 
         if (target.admin) {
             return {
                 success: false,
-                message: "Cannot delete admin players",
+                message: "No se pueden eliminar jugadores admin",
             };
         }
 
@@ -262,10 +262,10 @@ export async function deletePlayer(input: { playerId: string; performedByPlayerI
             success: true,
         };
     } catch (error) {
-        console.error("Error deleting player:", error);
+        console.error("Error al eliminar el jugador:", error);
         return {
             success: false,
-            message: "Failed to delete player",
+            message: "No se ha podido eliminar el jugador",
         };
     }
 }
@@ -283,10 +283,10 @@ export async function getPlayers(): Promise<ActionResponse<Player[]>> {
             data: players,
         };
     } catch (error) {
-        console.error("Error fetching players:", error);
+        console.error("Error al cargar los jugadores:", error);
         return {
             success: false,
-            message: "Failed to fetch players",
+            message: "No se han podido cargar los jugadores",
         };
     }
 }

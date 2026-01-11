@@ -38,13 +38,13 @@ export function CreatePlayerDialog({ className }: CreatePlayerDialogProps) {
                 // If it's a field error, we just show the first one or a generic message for now
                 if (res.errors) {
                     const firstError = Object.values(res.errors)[0]?.[0];
-                    setError(firstError || res.message || "Validation failed");
+                    setError(firstError || res.message || "La validación ha fallado");
                 } else {
-                    setError(res.message || "Failed to create player");
+                    setError(res.message || "No se ha podido crear el jugador");
                 }
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError("Ha ocurrido un error inesperado");
             console.error(err);
         } finally {
             setLoading(false);
@@ -56,19 +56,19 @@ export function CreatePlayerDialog({ className }: CreatePlayerDialogProps) {
             <DialogTrigger asChild>
                 <Button className={className}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Player
+                    Añadir jugador
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add New Player</DialogTitle>
-                        <DialogDescription>Create a new player for the game. Nickname matches will appear in game.</DialogDescription>
+                        <DialogTitle>Añadir nuevo jugador</DialogTitle>
+                        <DialogDescription>Crea un nuevo jugador para la partida. El apodo aparecerá durante el juego.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <label htmlFor="nickname" className="text-right text-sm font-medium">
-                                Nickname
+                                Apodo
                             </label>
                             <Input
                                 id="nickname"
@@ -103,7 +103,7 @@ export function CreatePlayerDialog({ className }: CreatePlayerDialogProps) {
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Player
+                            Guardar jugador
                         </Button>
                     </DialogFooter>
                 </form>

@@ -44,12 +44,12 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
 
             if (res.errors) {
                 const firstError = Object.values(res.errors)[0]?.[0];
-                setError(firstError || res.message || "Validation failed");
+                setError(firstError || res.message || "La validación ha fallado");
             } else {
-                setError(res.message || "Failed to delete player");
+                setError(res.message || "No se ha podido eliminar el jugador");
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError("Ha ocurrido un error inesperado");
             console.error(err);
         } finally {
             setLoading(false);
@@ -60,19 +60,20 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[520px]">
                 <DialogHeader>
-                    <DialogTitle className="text-red-600">Delete player</DialogTitle>
+                    <DialogTitle className="text-red-600">Eliminar jugador</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. The player and their participations may be removed depending on DB constraints.
+                        Esta acción no se puede deshacer. El jugador y sus participaciones pueden eliminarse dependiendo de las restricciones de la
+                        base de datos.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                        You are about to delete <span className="font-semibold">{player.nickname}</span>.
+                        Estás a punto de eliminar a <span className="font-semibold">{player.nickname}</span>.
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Confirm as admin</label>
+                        <label className="text-sm font-medium">Confirmar como admin</label>
                         <select
                             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                             value={performedByPlayerId}
@@ -80,7 +81,7 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
                             disabled={loading || adminOptions.length === 0}
                         >
                             {adminOptions.length === 0 ? (
-                                <option value="">No admins configured in DB</option>
+                                <option value="">No hay admins configurados en la base de datos</option>
                             ) : (
                                 adminOptions.map((a) => (
                                     <option key={a.id} value={a.id}>
@@ -89,7 +90,7 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
                                 ))
                             )}
                         </select>
-                        <p className="text-xs text-slate-500">Admins are immutable and must be marked directly in the database.</p>
+                        <p className="text-xs text-slate-500">Los admins son inmutables y deben marcarse directamente en la base de datos.</p>
                     </div>
 
                     {error && (
@@ -102,7 +103,7 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
 
                 <DialogFooter>
                     <Button variant="outline" type="button" onClick={() => onOpenChange(false)} disabled={loading}>
-                        Cancel
+                        Cancelar
                     </Button>
                     <Button
                         variant="destructive"
@@ -111,7 +112,7 @@ export function DeletePlayerDialog({ player, admins, open, onOpenChange }: Delet
                         disabled={loading || adminOptions.length === 0 || !performedByPlayerId}
                     >
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Delete
+                        Eliminar
                     </Button>
                 </DialogFooter>
             </DialogContent>

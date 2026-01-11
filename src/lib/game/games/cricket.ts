@@ -39,7 +39,7 @@ export class CricketGame implements GameLogic {
         const playerState = state.playerStates.find((p) => p.playerId === state.currentPlayerId);
 
         if (!playerState) {
-            throw new Error(`Player state not found for ${state.currentPlayerId}`);
+            throw new Error(`No se ha encontrado el estado del jugador para ${state.currentPlayerId}`);
         }
 
         const stats = ensureCricketStats(playerState);
@@ -154,13 +154,13 @@ export class CricketGame implements GameLogic {
     getScoreboard(state: GameState): Scoreboard {
         return {
             gameType: "cricket",
-            roundIndicator: `Round ${state.currentRound}`,
-            headers: ["Player", "Score"], // Simplified headers for now
+            roundIndicator: `Ronda ${state.currentRound}`,
+            headers: ["Jugador", "Puntos"],
             rows: state.playerStates.map((p) => {
                 const stats = ensureCricketStats(p);
                 return {
                     playerId: p.playerId,
-                    playerName: state.players.find((pl) => pl.id === p.playerId)?.name || "Unknown",
+                    playerName: state.players.find((pl) => pl.id === p.playerId)?.name || "Desconocido",
                     score: p.score,
                     active: p.playerId === state.currentPlayerId,
                     details: [],

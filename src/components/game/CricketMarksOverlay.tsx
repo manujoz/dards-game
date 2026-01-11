@@ -18,7 +18,7 @@ function getMarksColor(marks: number): string {
 }
 
 function formatCricketNumber(n: number): string {
-    return n === 25 ? "BULL" : String(n);
+    return n === 25 ? "B" : String(n);
 }
 
 export function CricketMarksOverlay({ open, gameState, onClose }: CricketMarksOverlayProps) {
@@ -28,7 +28,7 @@ export function CricketMarksOverlay({ open, gameState, onClose }: CricketMarksOv
     const config = gameState.config as CricketConfig;
     const numbers = config.numbers?.length ? config.numbers : CRICKET_NUMBERS_DEFAULT;
 
-    // Detect "dead" numbers: all players have 3+ marks.
+    // Detecta números "muertos": todos los jugadores tienen 3+ marcas.
     const isDead = (n: number): boolean => {
         return scoreboard.rows.every((r) => (Number(r.marks?.[String(n)] ?? 0) || 0) >= 3);
     };

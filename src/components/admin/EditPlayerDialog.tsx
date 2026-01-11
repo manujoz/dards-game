@@ -60,12 +60,12 @@ export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialo
 
             if (res.errors) {
                 const firstError = Object.values(res.errors)[0]?.[0];
-                setError(firstError || res.message || "Validation failed");
+                setError(firstError || res.message || "La validación ha fallado");
             } else {
-                setError(res.message || "Failed to update player");
+                setError(res.message || "No se ha podido actualizar el jugador");
             }
         } catch (err) {
-            setError("An unexpected error occurred");
+            setError("Ha ocurrido un error inesperado");
             console.error(err);
         } finally {
             setLoading(false);
@@ -77,14 +77,16 @@ export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialo
             <DialogContent className="sm:max-w-[480px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Player</DialogTitle>
-                        <DialogDescription>Update nickname and avatar. Admin flag is managed directly in the database.</DialogDescription>
+                        <DialogTitle>Editar jugador</DialogTitle>
+                        <DialogDescription>
+                            Actualiza el apodo y el avatar. La marca de admin se gestiona directamente en la base de datos.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <label htmlFor="edit-nickname" className="text-right text-sm font-medium">
-                                Nickname
+                                Apodo
                             </label>
                             <Input
                                 id="edit-nickname"
@@ -134,7 +136,7 @@ export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialo
                                             if (e.target.checked) setAvatarFile(null);
                                         }}
                                     />
-                                    Remove avatar
+                                    Quitar avatar
                                 </label>
                             </div>
                         </div>
@@ -150,7 +152,7 @@ export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialo
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save changes
+                            Guardar cambios
                         </Button>
                     </DialogFooter>
                 </form>

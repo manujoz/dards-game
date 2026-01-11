@@ -72,7 +72,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
         // `variant` stores the game config payload (JSON)
         config = JSON.parse(match.variant) as GameConfig;
     } catch (e) {
-        console.error("Failed to parse match config", e);
+        console.error("No se ha podido interpretar la configuración de la partida", e);
         return null;
     }
 
@@ -80,7 +80,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     if (!toGameId((config as { type?: string }).type ?? "")) {
         const fallbackType = toGameId(match.gameId);
         if (!fallbackType) {
-            console.error("Invalid match.gameId", match.gameId);
+            console.error("match.gameId inválido", match.gameId);
             return null;
         }
 
@@ -117,7 +117,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     try {
         gameState = GameEngine.init(players, config);
     } catch (e) {
-        console.error("Failed to init engine", e);
+        console.error("No se ha podido inicializar el motor", e);
         return null;
     }
 
@@ -137,7 +137,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     for (const dbThrow of match.throws) {
         const playerId = dbThrow.participant?.player?.id;
         if (!playerId) {
-            console.error("Throw missing participant.player relation", dbThrow.id);
+            console.error("Al tiro le falta la relación participant.player", dbThrow.id);
             continue;
         }
 

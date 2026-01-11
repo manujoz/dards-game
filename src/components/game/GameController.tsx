@@ -16,12 +16,26 @@ import { getGameLogic } from "@/lib/game/games";
 import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
 import { cn } from "@/lib/utils";
 import type { CreateMatchInput } from "@/lib/validation/matches";
-import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
+import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 interface GameControllerProps {
     initialState: GameState | null;
+}
+
+const GAME_TYPE_LABELS: Record<GameId, string> = {
+    x01: "X01",
+    cricket: "Cricket",
+    round_the_clock: "Alrededor del reloj",
+    high_score: "Puntuación máxima",
+    shanghai: "Shanghai",
+    killer: "Asesino",
+    halve_it: "A la mitad",
+};
+
+function getGameTypeLabel(id: GameId): string {
+    return GAME_TYPE_LABELS[id] ?? id;
 }
 
 export function GameController({ initialState }: GameControllerProps) {
@@ -164,7 +178,7 @@ export function GameController({ initialState }: GameControllerProps) {
             }
 
             setCheckoutBustOverlay({
-                title: "BUST",
+                title: "TIRADA NULA",
                 message: `Checkout inválido. ${outRule}`,
             });
         }
@@ -195,7 +209,7 @@ export function GameController({ initialState }: GameControllerProps) {
             throwIndex,
         }).then((res) => {
             if (!res.success) {
-                console.error("Failed to persist throw", res.message);
+                console.error("No se ha podido guardar el lanzamiento", res.message);
             }
         });
 
@@ -232,7 +246,7 @@ export function GameController({ initialState }: GameControllerProps) {
             if (result.success && result.data) {
                 window.location.href = `/game?matchId=${result.data.id}`;
             } else {
-                console.error("Failed to restart match", result.message);
+                console.error("No se ha podido reiniciar la partida", result.message);
             }
         });
     }
@@ -241,8 +255,8 @@ export function GameController({ initialState }: GameControllerProps) {
         return (
             <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
                 <HiddenTopBar defaultShowNewGame={true} />
-                <div className="text-white text-xl animate-pulse">Waiting for Match...</div>
-                <div className="text-slate-500 mt-2">Create a new game from the menu</div>
+                <div className="text-white text-xl animate-pulse">Esperando partida...</div>
+                <div className="text-slate-500 mt-2">Crea una nueva partida desde el menú</div>
             </main>
         );
     }
@@ -316,11 +330,11 @@ export function GameController({ initialState }: GameControllerProps) {
             {/* Footer / Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-end pointer-events-none">
                 <div className="text-slate-500 text-xs">
-                    <span>{gameState.config.type.toUpperCase()}</span>
+                    <span>{getGameTypeLabel(gameState.config.type)}</span>
                     <span className="mx-1">•</span>
-                    <span>{gameState.players.length} Players</span>
+                    <span>{gameState.players.length} Jugadores</span>
                     <span className="mx-1">•</span>
-                    <span>Round {gameState.currentRound}</span>
+                    <span>Ronda {gameState.currentRound}</span>
                 </div>
 
                 {isAwaitingNextTurn && (

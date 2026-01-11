@@ -49,7 +49,7 @@ export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch((e) => {
-                console.error("Fullscreen failed:", e);
+                console.error("No se ha podido activar pantalla completa:", e);
             });
             setIsFullscreen(true);
         } else {
@@ -94,39 +94,39 @@ export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig 
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => setShowNewGame(true)}>
                         <Gamepad2 className="w-4 h-4 mr-2" />
-                        New Game
+                        Nueva partida
                     </Button>
 
                     {canRestartSameConfig && onRestartSameConfig && (
                         <Button variant="outline" size="sm" onClick={onRestartSameConfig}>
                             <RotateCcw className="w-4 h-4 mr-2" />
-                            Restart
+                            Reiniciar
                         </Button>
                     )}
 
-                    <Button variant="ghost" size="icon" title="Resume" onClick={() => setIsVisible(false)}>
+                    <Button variant="ghost" size="icon" title="Reanudar" onClick={() => setIsVisible(false)}>
                         <Play className="w-4 h-4" />
                     </Button>
 
-                    <Button variant="ghost" size="icon" title="Undo Last Throw">
+                    <Button variant="ghost" size="icon" title="Deshacer último tiro">
                         <RotateCcw className="w-4 h-4" />
                     </Button>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" title="Calibration" onClick={() => setShowCalibration(true)}>
+                    <Button variant="ghost" size="icon" title="Calibración" onClick={() => setShowCalibration(true)}>
                         <Target className="w-4 h-4" />
                     </Button>
 
-                    <Button variant="ghost" size="icon" title="Toggle Fullscreen" onClick={toggleFullscreen}>
+                    <Button variant="ghost" size="icon" title="Alternar pantalla completa" onClick={toggleFullscreen}>
                         {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                     </Button>
 
-                    <Button variant="ghost" size="icon" title="Admin Panel" onClick={handleOpenAdmin}>
+                    <Button variant="ghost" size="icon" title="Panel de administración" onClick={handleOpenAdmin}>
                         <Settings className="w-4 h-4" />
                     </Button>
 
-                    <Button variant="ghost" size="icon" title="Close Menu" onClick={() => setIsVisible(false)}>
+                    <Button variant="ghost" size="icon" title="Cerrar menú" onClick={() => setIsVisible(false)}>
                         <X className="w-4 h-4" />
                     </Button>
                 </div>

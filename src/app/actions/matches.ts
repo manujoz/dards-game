@@ -40,10 +40,10 @@ export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEn
             data: matches,
         };
     } catch (error) {
-        console.error("Error fetching matches:", error);
+        console.error("Error al cargar las partidas:", error);
         return {
             success: false,
-            message: "Failed to fetch matches",
+            message: "No se han podido cargar las partidas",
         };
     }
 }
@@ -68,7 +68,7 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -83,7 +83,7 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
             // We might want to fetch player names to name teams "Player 1 & Player 2" or "Team A"
             // For now, simpler: "Team 1", "Team 2" ...
             matchTeamsData = explicitTeams.map((pIds, idx) => ({
-                name: `Team ${idx + 1}`,
+                name: `Equipo ${idx + 1}`,
                 memberIds: pIds,
             }));
         } else {
@@ -97,7 +97,7 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
             matchTeamsData = playerIds.map((pId) => {
                 const p = players.find((pl) => pl.id === pId);
                 return {
-                    name: p?.nickname || "Unknown",
+                    name: p?.nickname || "Desconocido",
                     memberIds: [pId],
                 };
             });
@@ -143,10 +143,10 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
         // Re-fetch with relations
         return await getMatch(match.id);
     } catch (error) {
-        console.error("Error creating match:", error);
+        console.error("Error al crear la partida:", error);
         return {
             success: false,
-            message: "Failed to create match",
+            message: "No se ha podido crear la partida",
         };
     }
 }
@@ -177,7 +177,7 @@ export async function getMatch(id: string): Promise<ActionResponse<MatchWithDeta
         if (!match) {
             return {
                 success: false,
-                message: "Match not found",
+                message: "No se ha encontrado la partida",
             };
         }
 
@@ -186,10 +186,10 @@ export async function getMatch(id: string): Promise<ActionResponse<MatchWithDeta
             data: match as MatchWithDetails,
         };
     } catch (error) {
-        console.error("Error fetching match:", error);
+        console.error("Error al cargar la partida:", error);
         return {
             success: false,
-            message: "Failed to fetch match",
+            message: "No se ha podido cargar la partida",
         };
     }
 }
@@ -223,10 +223,10 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
             data: newThrow,
         };
     } catch (error) {
-        console.error("Error registering throw:", error);
+        console.error("Error al registrar el tiro:", error);
         return {
             success: false,
-            message: "Failed to register throw",
+            message: "No se ha podido registrar el tiro",
         };
     }
 }
@@ -241,7 +241,7 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
         if (!lastThrow) {
             return {
                 success: false,
-                message: "No throws to undo",
+                message: "No hay tiros para deshacer",
             };
         }
 
@@ -255,10 +255,10 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
             success: true,
         };
     } catch (error) {
-        console.error("Error undoing throw:", error);
+        console.error("Error al deshacer el tiro:", error);
         return {
             success: false,
-            message: "Failed to undo throw",
+            message: "No se ha podido deshacer el tiro",
         };
     }
 }
@@ -279,7 +279,7 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
         if (!participant) {
             return {
                 success: false,
-                message: "Participant not found for this match",
+                message: "No se ha encontrado el participante de esta partida",
             };
         }
 
@@ -311,10 +311,10 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
             data: newThrow,
         };
     } catch (error) {
-        console.error("Error registering throw (by player):", error);
+        console.error("Error al registrar el tiro (por jugador):", error);
         return {
             success: false,
-            message: "Failed to register throw",
+            message: "No se ha podido registrar el tiro",
         };
     }
 }

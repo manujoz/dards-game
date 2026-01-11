@@ -47,7 +47,7 @@ export async function getRankings(gameType: "x01" | "cricket" | "all" = "all"): 
             data: rankings,
         };
     } catch (error) {
-        console.error("Error fetching rankings:", error);
+        console.error("Error al cargar la clasificación:", error);
         return {
             success: false,
             message: "No se han podido cargar los rankings",

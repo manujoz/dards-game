@@ -59,7 +59,7 @@ export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
         { href: "/admin", label: "Inicio", icon: Home },
         { href: "/players", label: "Jugadores", icon: Users },
         { href: "/matches", label: "Partidas", icon: History },
-        { href: "/rankings", label: "Rankings", icon: Trophy },
+        { href: "/rankings", label: "Clasificación", icon: Trophy },
         { href: "/rules", label: "Reglas", icon: BookOpen },
     ] as const;
 

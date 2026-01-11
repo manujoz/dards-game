@@ -100,15 +100,15 @@ export class RoundTheClockGame implements GameLogic {
     getScoreboard(state: GameState): Scoreboard {
         return {
             gameType: "round_the_clock",
-            roundIndicator: `Round ${state.currentRound}`,
-            headers: ["Target"],
+            roundIndicator: `Ronda ${state.currentRound}`,
+            headers: ["Objetivo"],
             rows: state.playerStates.map((ps) => {
                 const stats = ensureRoundTheClockStats(state, ps);
                 const player = state.players.find((p) => p.id === ps.playerId)!;
                 const isWinner = state.winnerId === ps.playerId;
 
-                let displayTarget = isWinner ? "WIN" : stats.target.toString();
-                if (stats.target === 25) displayTarget = "BULL";
+                let displayTarget = isWinner ? "GANÓ" : stats.target.toString();
+                if (stats.target === 25) displayTarget = "CENTRO";
 
                 return {
                     playerId: ps.playerId,

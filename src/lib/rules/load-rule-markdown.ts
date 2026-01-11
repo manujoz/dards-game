@@ -40,7 +40,7 @@ export function stripRulesMarkdownChrome(source: string): string {
 
 export async function loadRuleMarkdown(rule: RuleGameDefinition): Promise<LoadedRuleMarkdown> {
     if (!isSafeDocFileName(rule.docFileName)) {
-        throw new Error("Invalid rules doc filename");
+        throw new Error("Nombre de archivo de reglas inválido");
     }
 
     const absolutePath = path.join(process.cwd(), "docs", "rules", rule.docFileName);

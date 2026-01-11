@@ -72,7 +72,7 @@ export const gameConfigSchema = z.discriminatedUnion("type", [
 export const createMatchSchema = z.object({
     gameId: z.enum(["x01", "cricket", "round_the_clock", "high_score", "shanghai", "killer", "halve_it"]),
     config: gameConfigSchema,
-    playerIds: z.array(z.string().uuid()).min(1, "At least one player is required"),
+    playerIds: z.array(z.string().uuid()).min(1, "Se requiere al menos un jugador"),
     // Optional: Pre-defined teams (array of player ID arrays)
     teams: z.array(z.array(z.string().uuid())).optional(),
 });

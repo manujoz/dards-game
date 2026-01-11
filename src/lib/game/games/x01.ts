@@ -18,7 +18,7 @@ export class X01Game implements GameLogic {
         const playerState = state.playerStates.find((p) => p.playerId === state.currentPlayerId);
 
         if (!playerState) {
-            throw new Error(`Player state not found for ${state.currentPlayerId}`);
+            throw new Error(`No se ha encontrado el estado del jugador para ${state.currentPlayerId}`);
         }
 
         const currentScore = playerState.score;
@@ -118,13 +118,13 @@ export class X01Game implements GameLogic {
     getScoreboard(state: GameState): Scoreboard {
         return {
             gameType: "x01",
-            roundIndicator: `Round ${state.currentRound}`,
-            headers: ["Player", "Score"], // Simplified
+            roundIndicator: `Ronda ${state.currentRound}`,
+            headers: ["Jugador", "Puntos"],
             rows: state.playerStates.map((p) => {
                 const player = state.players.find((pl) => pl.id === p.playerId);
                 return {
                     playerId: p.playerId,
-                    playerName: player?.name || "Unknown",
+                    playerName: player?.name || "Desconocido",
                     score: p.score,
                     active: p.playerId === state.currentPlayerId,
                     details: [], // Could add rounds history here later

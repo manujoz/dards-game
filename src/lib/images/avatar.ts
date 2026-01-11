@@ -14,7 +14,7 @@ export interface ProcessedAvatar {
 
 function assertIsImageFile(file: File): void {
     if (!file.type || !file.type.startsWith("image/")) {
-        throw new Error("Invalid avatar file type");
+        throw new Error("Tipo de archivo de avatar inválido");
     }
 }
 
@@ -22,7 +22,7 @@ export async function processAvatarFile(file: File): Promise<ProcessedAvatar> {
     assertIsImageFile(file);
 
     if (file.size > MAX_INPUT_BYTES) {
-        throw new Error("Avatar file too large");
+        throw new Error("El archivo de avatar es demasiado grande");
     }
 
     const inputBuffer = Buffer.from(await file.arrayBuffer());

@@ -33,7 +33,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </Link>
 
                     <Link href="/rankings" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">
-                        Rankings
+                        Clasificación
                     </Link>
 
                     <Link href="/rules" className="rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-slate-900 px-4 py-4 font-bold">

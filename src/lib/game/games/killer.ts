@@ -89,8 +89,8 @@ export class KillerGame implements GameLogic {
     getScoreboard(state: GameState): Scoreboard {
         return {
             gameType: "killer",
-            roundIndicator: `Round ${state.currentRound}`,
-            headers: ["Number", "Lives", "Status"],
+            roundIndicator: `Ronda ${state.currentRound}`,
+            headers: ["Número", "Vidas", "Estado"],
             rows: state.playerStates.map((ps) => {
                 const stats = ps.stats as KillerStats;
                 const player = state.players.find((p) => p.id === ps.playerId)!;
@@ -99,9 +99,9 @@ export class KillerGame implements GameLogic {
                 return {
                     playerId: ps.playerId,
                     playerName: player.name,
-                    score: isDead ? "OUT" : stats.lives,
+                    score: isDead ? "FUERA" : stats.lives,
                     active: state.currentPlayerId === ps.playerId && !isDead,
-                    details: [{ value: stats.assignedNumber }, { value: stats.lives }, { value: stats.isKiller ? "Killer" : "-" }],
+                    details: [{ value: stats.assignedNumber }, { value: stats.lives }, { value: stats.isKiller ? "Asesino" : "-" }],
                 };
             }),
         };

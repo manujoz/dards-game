@@ -30,17 +30,17 @@ export function PlayerRowActions({ player, admins }: PlayerRowActionsProps) {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900">
                         <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">Acciones</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem onSelect={() => setEditOpen(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        Edit
+                        Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={handleCopyId}>
                         <Copy className="mr-2 h-4 w-4" />
-                        Copy ID
+                        Copiar ID
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -49,7 +49,7 @@ export function PlayerRowActions({ player, admins }: PlayerRowActionsProps) {
                         disabled={!canDelete}
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        Eliminar
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

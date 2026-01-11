@@ -13,6 +13,15 @@ import { useEffect, useState, useTransition } from "react";
 
 type GameType = "x01" | "cricket" | "round_the_clock" | "killer" | "shanghai" | "high_score";
 
+const GAME_TYPE_LABELS: Record<GameType, string> = {
+    x01: "X01",
+    cricket: "Cricket",
+    round_the_clock: "Alrededor del reloj",
+    killer: "Asesino",
+    shanghai: "Shanghai",
+    high_score: "Puntuación máxima",
+};
+
 interface NewGameModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -100,7 +109,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                 // Redirect to the new game with matchId
                 router.push(`/game?matchId=${result.data.id}`);
             } else {
-                console.error("Failed to start game", result.message);
+                console.error("No se ha podido iniciar la partida", result.message);
             }
         });
     };
@@ -109,15 +118,15 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Start New Game</DialogTitle>
-                    <DialogDescription>Configure game settings and select players.</DialogDescription>
+                    <DialogTitle>Nueva partida</DialogTitle>
+                    <DialogDescription>Configura el juego y selecciona los jugadores.</DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-6 py-4">
                     {/* Game Type Selection */}
                     <div className="space-y-3">
                         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Game Mode
+                            Modo de juego
                         </label>
                         <div className="grid grid-cols-3 gap-3">
                             {(["x01", "cricket", "round_the_clock", "killer", "shanghai", "high_score"] as GameType[]).map((type) => (
@@ -130,7 +139,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                         gameType === type ? "border-primary bg-accent/50" : "border-transparent bg-secondary",
                                     )}
                                 >
-                                    <span className="font-bold uppercase">{type.replace(/_/g, " ")}</span>
+                                    <span className="font-bold uppercase">{GAME_TYPE_LABELS[type]}</span>
                                 </div>
                             ))}
                         </div>
@@ -140,7 +149,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                     {gameType === "x01" && (
                         <div className="space-y-4">
                             <div className="space-y-3">
-                                <label className="text-sm font-medium">Start Score</label>
+                                <label className="text-sm font-medium">Puntuación inicial</label>
                                 <div className="flex gap-2">
                                     {[301, 501, 701, 901].map((score) => (
                                         <Button
@@ -156,32 +165,33 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-sm font-medium">Out Mode</label>
+                                <label className="text-sm font-medium">Modo de salida</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     <Button
                                         type="button"
                                         variant={x01OutMode === "straight" ? "default" : "outline"}
                                         onClick={() => setX01OutMode("straight")}
                                     >
-                                        Straight
+                                        Directo
                                     </Button>
                                     <Button
                                         type="button"
                                         variant={x01OutMode === "double" ? "default" : "outline"}
                                         onClick={() => setX01OutMode("double")}
                                     >
-                                        Double
+                                        Doble
                                     </Button>
                                     <Button
                                         type="button"
                                         variant={x01OutMode === "master" ? "default" : "outline"}
                                         onClick={() => setX01OutMode("master")}
                                     >
-                                        Master
+                                        Maestro
                                     </Button>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    En Double/Master-Out, si llegas a 0 sin el multiplicador requerido, es BUST y vuelves al score inicial del turno.
+                                    En Doble/Maestro-Out, si llegas a 0 sin el multiplicador requerido, el turno es nulo y vuelves a la puntuación
+                                    inicial del turno.
                                 </p>
                             </div>
                         </div>
@@ -189,21 +199,21 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
 
                     {gameType === "cricket" && (
                         <div className="space-y-3">
-                            <label className="text-sm font-medium">Mode</label>
+                            <label className="text-sm font-medium">Modo</label>
                             <div className="flex gap-2">
                                 <Button
                                     variant={cricketMode === "standard" ? "default" : "outline"}
                                     onClick={() => setCricketMode("standard")}
                                     className="flex-1"
                                 >
-                                    Standard
+                                    Estándar
                                 </Button>
                                 <Button
                                     variant={cricketMode === "cut_throat" ? "default" : "outline"}
                                     onClick={() => setCricketMode("cut_throat")}
                                     className="flex-1"
                                 >
-                                    Cut Throat
+                                    Contra todos
                                 </Button>
                             </div>
                         </div>
@@ -212,9 +222,9 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                     {/* Player Selection */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium">Players ({selectedPlayerIds.length})</label>
+                            <label className="text-sm font-medium">Jugadores ({selectedPlayerIds.length})</label>
                             <Button variant="ghost" size="sm" onClick={() => router.push("/players")}>
-                                <UserPlus className="w-4 h-4 mr-2" /> Manage
+                                <UserPlus className="w-4 h-4 mr-2" /> Gestionar
                             </Button>
                         </div>
 
@@ -245,7 +255,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                 ))}
                                 {players.length === 0 && (
                                     <div className="col-span-full py-4 text-center text-muted-foreground text-sm">
-                                        No players found. Please add players in admin.
+                                        No se han encontrado jugadores. Añade jugadores en el panel de administración.
                                     </div>
                                 )}
                             </div>
@@ -255,11 +265,11 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        Cancelar
                     </Button>
                     <Button onClick={handleStartGame} disabled={isPending || selectedPlayerIds.length === 0}>
                         {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                        Start Game
+                        Empezar partida
                     </Button>
                 </DialogFooter>
             </DialogContent>

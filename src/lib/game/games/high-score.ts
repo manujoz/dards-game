@@ -34,8 +34,8 @@ export class HighScoreGame implements GameLogic {
         const config = state.config as HighScoreConfig;
         return {
             gameType: "high_score",
-            roundIndicator: `Round ${state.currentRound}/${config.rounds || "?"}`,
-            headers: ["Score"],
+            roundIndicator: `Ronda ${state.currentRound}/${config.rounds || "?"}`,
+            headers: ["Puntos"],
             rows: state.playerStates.map((ps) => {
                 const player = state.players.find((p) => p.id === ps.playerId)!;
                 return {
