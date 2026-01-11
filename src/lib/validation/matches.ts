@@ -28,6 +28,8 @@ const cricketConfigSchema = baseGameConfigSchema.extend({
 const roundTheClockConfigSchema = baseGameConfigSchema.extend({
     type: z.literal("round_the_clock"),
     mode: z.enum(["singles", "doubles", "triples"]),
+    startNumber: z.number().int().min(1).max(20).default(1),
+    endNumber: z.union([z.number().int().min(1).max(20), z.literal(25)]).default(25),
 });
 
 // High Score

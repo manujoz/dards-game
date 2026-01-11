@@ -16,5 +16,5 @@ export default async function GamePage({ searchParams }: PageProps) {
         gameState = await getMatchState(matchId);
     }
 
-    return <GameController initialState={gameState} />;
+    return <GameController key={matchId ?? "new"} initialState={gameState} />;
 }

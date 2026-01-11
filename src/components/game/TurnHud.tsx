@@ -34,17 +34,14 @@ export function TurnHud({ gameState }: TurnHudProps) {
     const throwsLeft = 3 - throws.length;
 
     return (
-        <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-start pointer-events-none">
-            {/* Left: Player Info */}
-            <div className="bg-slate-900/90 backdrop-blur text-white p-4 rounded-xl border border-slate-700 shadow-xl min-w-[200px]">
-                <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Current Turn</div>
-                <div className="text-2xl font-bold truncate">{currentPlayer.name}</div>
-                <div className="text-4xl font-mono font-black text-green-400 mt-2">{playerState.score}</div>
-                <div className="text-xs text-slate-500 mt-1">Round {currentRound}</div>
-            </div>
-
+        <div className="absolute top-4 left-0 right-0 px-4 flex justify-end items-start pointer-events-none">
             {/* Right: Throws */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 items-end">
+                <div className="text-xs text-slate-500 mr-1">
+                    <span className="text-slate-400">{currentPlayer.name}</span>
+                    <span className="mx-1">•</span>
+                    <span>Round {currentRound}</span>
+                </div>
                 <div className="flex gap-2 justify-end">
                     {throws.map((t, i) => (
                         <div
