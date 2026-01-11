@@ -3,3 +3,7 @@ export interface StartGameButtonProps {
     label: string;
     className?: string;
 }
+
+export interface AdminLoginFormProps {
+    returnTo?: string | null;
+}

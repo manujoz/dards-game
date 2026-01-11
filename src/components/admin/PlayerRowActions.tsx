@@ -2,19 +2,21 @@
 
 import type { PlayerRowActionsProps } from "@/types/components";
 
+import { useMemo, useState } from "react";
+
+import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
 
 import { DeletePlayerDialog } from "./DeletePlayerDialog";
 import { EditPlayerDialog } from "./EditPlayerDialog";
 
-export function PlayerRowActions({ player, admins }: PlayerRowActionsProps) {
+export function PlayerRowActions({ player }: PlayerRowActionsProps) {
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
 
-    const canDelete = useMemo(() => admins.some((p) => p.admin) && !player.admin, [admins, player.admin]);
+    const canDelete = useMemo(() => !player.admin, [player.admin]);
 
     async function handleCopyId() {
         try {
@@ -55,7 +57,7 @@ export function PlayerRowActions({ player, admins }: PlayerRowActionsProps) {
             </DropdownMenu>
 
             <EditPlayerDialog player={player} open={editOpen} onOpenChange={setEditOpen} />
-            <DeletePlayerDialog player={player} admins={admins} open={deleteOpen} onOpenChange={setDeleteOpen} />
+            <DeletePlayerDialog player={player} open={deleteOpen} onOpenChange={setDeleteOpen} />
         </>
     );
 }

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "players" ADD COLUMN "admin" BOOLEAN NOT NULL DEFAULT FALSE;

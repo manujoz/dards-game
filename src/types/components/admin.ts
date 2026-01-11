@@ -16,14 +16,12 @@ export interface EditPlayerDialogProps {
 
 export interface DeletePlayerDialogProps {
     player: Player;
-    admins: Player[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
 export interface PlayerRowActionsProps {
     player: Player;
-    admins: Player[];
 }
 
 export interface AdminSidebarProps {

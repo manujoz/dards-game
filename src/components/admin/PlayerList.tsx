@@ -14,8 +14,6 @@ const PLAYER_JOINED_DATE_FORMATTER = new Intl.DateTimeFormat("es-ES", {
 });
 
 export function PlayerList({ initialPlayers }: PlayerListProps) {
-    const admins = initialPlayers.filter((p) => p.admin);
-
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -62,7 +60,7 @@ export function PlayerList({ initialPlayers }: PlayerListProps) {
                                 </td>
                                 <td className="p-4 align-middle text-slate-500">{PLAYER_JOINED_DATE_FORMATTER.format(new Date(player.createdAt))}</td>
                                 <td className="p-4 text-right align-middle">
-                                    <PlayerRowActions player={player} admins={admins} />
+                                    <PlayerRowActions player={player} />
                                 </td>
                             </tr>
                         ))}

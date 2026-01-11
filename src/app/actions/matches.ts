@@ -1,25 +1,36 @@
 "use server";
 
-import { prisma } from "@/lib/db/prisma";
-import { createMatchSchema, type CreateMatchInput } from "@/lib/validation/matches";
 import { type ActionResponse } from "@/types/actions/shared";
 import { type Match, type MatchParticipant, type MatchTeam, type Player, type Throw } from "@prisma/client";
+
 import { revalidatePath } from "next/cache";
 
-// Extended types for return values including relations
+import { requireAdminSession } from "@/lib/auth/require-admin-session";
+import { prisma } from "@/lib/db/prisma";
+import { createMatchSchema, type CreateMatchInput } from "@/lib/validation/matches";
+
+function isUnauthorized(error: unknown): boolean {
+    return error instanceof Error && error.message === "No autorizado";
+}
+
+type PublicPlayer = Omit<Player, "password">;
+
+// Extended types for return values including relations (sin exponer password)
 export type MatchWithDetails = Match & {
     teams: MatchTeam[];
-    participants: (MatchParticipant & { player: Player })[];
+    participants: (MatchParticipant & { player: PublicPlayer })[];
     throws: Throw[];
 };
 
 export type MatchListEntry = Match & {
     teams: MatchTeam[];
-    participants: (MatchParticipant & { player: Player })[];
+    participants: (MatchParticipant & { player: PublicPlayer })[];
 };
 
 export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEntry[]>> {
     try {
+        await requireAdminSession();
+
         const matches = await prisma.match.findMany({
             take: limit,
             orderBy: {
@@ -29,7 +40,16 @@ export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEn
                 teams: true,
                 participants: {
                     include: {
-                        player: true,
+                        player: {
+                            select: {
+                                id: true,
+                                nickname: true,
+                                avatarUrl: true,
+                                admin: true,
+                                createdAt: true,
+                                updatedAt: true,
+                            },
+                        },
                     },
                 },
             },
@@ -40,6 +60,13 @@ export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEn
             data: matches,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al cargar las partidas:", error);
         return {
             success: false,
@@ -64,6 +91,8 @@ export type RegisterThrowInput = {
 
 export async function createMatch(input: CreateMatchInput): Promise<ActionResponse<MatchWithDetails>> {
     try {
+        await requireAdminSession();
+
         const validated = createMatchSchema.safeParse(input);
         if (!validated.success) {
             return {
@@ -143,6 +172,13 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
         // Re-fetch with relations
         return await getMatch(match.id);
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al crear la partida:", error);
         return {
             success: false,
@@ -153,13 +189,24 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
 
 export async function getMatch(id: string): Promise<ActionResponse<MatchWithDetails>> {
     try {
+        await requireAdminSession();
+
         const match = await prisma.match.findUnique({
             where: { id },
             include: {
                 teams: true,
                 participants: {
                     include: {
-                        player: true,
+                        player: {
+                            select: {
+                                id: true,
+                                nickname: true,
+                                avatarUrl: true,
+                                admin: true,
+                                createdAt: true,
+                                updatedAt: true,
+                            },
+                        },
                         throws: true,
                     },
                     orderBy: {
@@ -186,6 +233,13 @@ export async function getMatch(id: string): Promise<ActionResponse<MatchWithDeta
             data: match as MatchWithDetails,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al cargar la partida:", error);
         return {
             success: false,
@@ -196,6 +250,8 @@ export async function getMatch(id: string): Promise<ActionResponse<MatchWithDeta
 
 export async function registerThrow(matchId: string, throwData: RegisterThrowInput): Promise<ActionResponse<Throw>> {
     try {
+        await requireAdminSession();
+
         // Calculate points if missing
         const points = throwData.points ?? throwData.segment * throwData.multiplier;
 
@@ -223,6 +279,13 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
             data: newThrow,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al registrar el tiro:", error);
         return {
             success: false,
@@ -233,6 +296,8 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
 
 export async function undoLastThrow(matchId: string): Promise<ActionResponse<void>> {
     try {
+        await requireAdminSession();
+
         const lastThrow = await prisma.throw.findFirst({
             where: { matchId },
             orderBy: { timestamp: "desc" },
@@ -255,6 +320,13 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
             success: true,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al deshacer el tiro:", error);
         return {
             success: false,
@@ -269,6 +341,8 @@ export type RegisterThrowForPlayerInput = Omit<RegisterThrowInput, "participantI
 
 export async function registerThrowForPlayer(matchId: string, throwData: RegisterThrowForPlayerInput): Promise<ActionResponse<Throw>> {
     try {
+        await requireAdminSession();
+
         const participant = await prisma.matchParticipant.findFirst({
             where: {
                 matchId,
@@ -311,6 +385,13 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
             data: newThrow,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al registrar el tiro (por jugador):", error);
         return {
             success: false,
