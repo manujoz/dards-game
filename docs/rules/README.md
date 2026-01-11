@@ -34,5 +34,3 @@ Este directorio contiene las reglas y especificaciones de los 7 modos de juego d
 - **Bust**: Turno que resulta en puntaje inválido (ej: bajar de 0 en X01). El puntaje revierte al inicio del turno
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

@@ -1,5 +1,6 @@
 "use client";
 
+import { createMatch, registerThrowForPlayer } from "@/app/actions/matches";
 import { CheckoutBustOverlay } from "@/components/game/CheckoutBustOverlay";
 import { CricketMarksOverlay } from "@/components/game/CricketMarksOverlay";
 import { DartboardCanvas } from "@/components/game/DartboardCanvas";
@@ -14,12 +15,27 @@ import { GameEngine } from "@/lib/game/game-engine";
 import { getGameLogic } from "@/lib/game/games";
 import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
 import { cn } from "@/lib/utils";
-import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
+import type { CreateMatchInput } from "@/lib/validation/matches";
+import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 interface GameControllerProps {
     initialState: GameState | null;
+}
+
+const GAME_TYPE_LABELS: Record<GameId, string> = {
+    x01: "X01",
+    cricket: "Cricket",
+    round_the_clock: "Alrededor del reloj",
+    high_score: "Puntuación máxima",
+    shanghai: "Shanghai",
+    killer: "Asesino",
+    halve_it: "A la mitad",
+};
+
+function getGameTypeLabel(id: GameId): string {
+    return GAME_TYPE_LABELS[id] ?? id;
 }
 
 export function GameController({ initialState }: GameControllerProps) {
@@ -31,6 +47,7 @@ export function GameController({ initialState }: GameControllerProps) {
     const [cricketMarksOpen, setCricketMarksOpen] = useState(false);
     const boardContainerRef = useRef<HTMLDivElement>(null);
     const [lastScreenHit, setLastScreenHit] = useState<{ x: number; y: number; kind: "hit" | "miss" } | null>(null);
+    const [isRestartPending, startRestartTransition] = useTransition();
 
     const LANDSCAPE_SCOREBOARD_WIDTH_PX = 280;
     let boardMaxSizeStyle: { maxWidth: string; maxHeight: string } | undefined;
@@ -131,6 +148,8 @@ export function GameController({ initialState }: GameControllerProps) {
         // processThrow calculates the result AND mutates player state (score)
         const throwResult = gameLogic.processThrow(gameState, hit);
 
+        const throwIndex = gameState.currentTurn.throws.length + 1;
+
         // 2. Add Throw to State
         const newState = GameEngine.addThrow(gameState, throwResult);
 
@@ -159,7 +178,7 @@ export function GameController({ initialState }: GameControllerProps) {
             }
 
             setCheckoutBustOverlay({
-                title: "BUST",
+                title: "TIRADA NULA",
                 message: `Checkout inválido. ${outRule}`,
             });
         }
@@ -174,8 +193,25 @@ export function GameController({ initialState }: GameControllerProps) {
             isAwaitingNextTurnRef.current = true;
         }
 
-        // TODO: Here we should call a Server Action to persist the throw!
-        // await saveThrow(matchId, throwResult);
+        // Persist throw (best-effort). This enables refresh persistence via the loader.
+        // NOTE: We currently don't persist exact hit coordinates (x/y) yet; segment/multiplier is enough to replay.
+        registerThrowForPlayer(gameState.id, {
+            playerId: gameState.currentPlayerId,
+            segment: throwResult.hit.segment,
+            multiplier: throwResult.hit.multiplier,
+            x: 0,
+            y: 0,
+            points: throwResult.points,
+            isBust: throwResult.isBust,
+            isWin: throwResult.isWin,
+            isValid: throwResult.isValid,
+            roundIndex: gameState.currentTurn.roundIndex,
+            throwIndex,
+        }).then((res) => {
+            if (!res.success) {
+                console.error("No se ha podido guardar el lanzamiento", res.message);
+            }
+        });
 
         setGameState(newState);
     };
@@ -194,19 +230,44 @@ export function GameController({ initialState }: GameControllerProps) {
         setIsPaused((prev) => !prev);
     };
 
+    function handleRestartSameConfig() {
+        if (!gameState) return;
+        if (gameState.players.length === 0) return;
+
+        const playerIds = gameState.players.map((p) => p.id);
+
+        startRestartTransition(async () => {
+            const result = await createMatch({
+                gameId: gameState.config.type,
+                config: gameState.config as unknown as CreateMatchInput["config"],
+                playerIds,
+            });
+
+            if (result.success && result.data) {
+                window.location.href = `/game?matchId=${result.data.id}`;
+            } else {
+                console.error("No se ha podido reiniciar la partida", result.message);
+            }
+        });
+    }
+
     if (!gameState) {
         return (
             <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
-                <HiddenTopBar />
-                <div className="text-white text-xl animate-pulse">Waiting for Match...</div>
-                <div className="text-slate-500 mt-2">Create a new game from the menu</div>
+                <HiddenTopBar defaultShowNewGame={true} />
+                <div className="text-white text-xl animate-pulse">Esperando partida...</div>
+                <div className="text-slate-500 mt-2">Crea una nueva partida desde el menú</div>
             </main>
         );
     }
 
     return (
         <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col" onPointerDown={handleGlobalPointerDown}>
-            <HiddenTopBar />
+            <HiddenTopBar
+                defaultShowNewGame={false}
+                canRestartSameConfig={gameState.status === "active" || gameState.status === "completed"}
+                onRestartSameConfig={handleRestartSameConfig}
+            />
             <GameEffects gameState={gameState} />
             <CheckoutBustOverlay
                 open={Boolean(checkoutBustOverlay)}
@@ -269,11 +330,11 @@ export function GameController({ initialState }: GameControllerProps) {
             {/* Footer / Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-end pointer-events-none">
                 <div className="text-slate-500 text-xs">
-                    <span>{gameState.config.type.toUpperCase()}</span>
+                    <span>{getGameTypeLabel(gameState.config.type)}</span>
                     <span className="mx-1">•</span>
-                    <span>{gameState.players.length} Players</span>
+                    <span>{gameState.players.length} Jugadores</span>
                     <span className="mx-1">•</span>
-                    <span>Round {gameState.currentRound}</span>
+                    <span>Ronda {gameState.currentRound}</span>
                 </div>
 
                 {isAwaitingNextTurn && (
@@ -321,8 +382,24 @@ export function GameController({ initialState }: GameControllerProps) {
                 )}
 
                 {gameState.status === "completed" && (
-                    <div className="pointer-events-auto bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl animate-bounce font-bold">
-                        GAME OVER! Winner: {gameState.players.find((p) => p.id === gameState.winnerId)?.name}
+                    <div className="pointer-events-auto bg-green-600 text-white px-5 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3">
+                        <div>
+                            <div className="text-sm opacity-90">Ganador</div>
+                            <div className="text-lg">{gameState.players.find((p) => p.id === gameState.winnerId)?.name ?? "-"}</div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleRestartSameConfig}
+                            disabled={isRestartPending}
+                            data-no-throw="true"
+                            className={cn(
+                                "ml-2 px-4 py-2 rounded-lg bg-white/15 hover:bg-white/20 border border-white/20",
+                                "transition disabled:opacity-60 disabled:cursor-not-allowed",
+                            )}
+                        >
+                            {isRestartPending ? "Reiniciando…" : "Repetir"}
+                        </button>
                     </div>
                 )}
             </div>

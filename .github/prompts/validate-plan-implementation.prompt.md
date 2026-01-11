@@ -11,14 +11,14 @@ description: Validate plan implementation with comprehensive QA analysis includi
 
 <workflow>
 
-1. **Plan Analysis**: Read implementation plan (e.g., `ai/[issue-type]/INV-XX-plan.md`), extract Jira ID, understand acceptance criteria and scope
+1. **Plan Analysis**: Read implementation plan (e.g., `ai/[issue-type]/*-plan.md`), understand acceptance criteria and scope
 2. **Jira Context**: Search Jira for parent/related issues, verify requirements alignment, check for blockers or dependencies
 3. **Code Discovery**: Locate modified/created files via semantic search and grep, map changes to plan phases
 4. **Implementation Verification**: Validate each checkbox in plan against actual code, verify technical requirements met
-5. **Code Quality Review**: Apply QA standards (TypeScript, i18n, Server Actions, performance, security) per instructions
+5. **Code Quality Review**: Apply QA standards (TypeScript, Server Actions, performance, security) per instructions
 6. **Edge Case Analysis**: Test boundary conditions, error handling, concurrent operations, empty states, invalid inputs
 7. **Regression Check**: Identify potentially affected features, verify no breaking changes, validate related workflows
-8. **Documentation Audit**: Confirm tests exist, i18n keys added, code comments present, architecture docs updated if needed
+8. **Documentation Audit**: Confirm tests exist, code comments present, architecture docs updated if needed
 9. **Report Generation**: Produce structured QA report with blocking issues, warnings, approvals, and recommendations
 
 </workflow>
@@ -29,12 +29,12 @@ description: Validate plan implementation with comprehensive QA analysis includi
 
 **Plan File**:
 - Read plan file completely (all sections: Context, Changes, Steps, Verification)
-- Extract Jira ticket ID (e.g., `INV-19` from filename or frontmatter)
+- If the plan includes a ticket ID, extract it; otherwise skip
 - Note parent/related tickets if mentioned
 - Identify critical constraints and out-of-scope items
 
 **Jira Research**:
-- Search Jira using ticket ID to retrieve:
+- If Jira is used, search Jira using ticket ID to retrieve:
   - Acceptance criteria (AC)
   - Parent story context (if subtask)
   - Related/blocking issues
@@ -47,7 +47,7 @@ description: Validate plan implementation with comprehensive QA analysis includi
 - Search codebase for files mentioned in plan's "Proposed Changes"
 - Use semantic search for related components/actions/types
 - Check for unexpected modifications (files changed but not in plan)
-- Search in git using ticket as key search (e.g., `INV-19`) for earch all commits related with the task, because the commit for one task always follow the pattern `feat(TASK-ID): short description` or `fix(TASK-ID): short description` or similar.
+- Search in git using the ticket ID as a key (when applicable).
 
 </context_gathering>
 
@@ -66,8 +66,8 @@ description: Validate plan implementation with comprehensive QA analysis includi
 - ✅ TypeScript: No `any`, proper interfaces in `src/types/`, explicit return types
 - ✅ Components: Correct `"use client"` / Server Component usage, props typed
 - ✅ Server Actions: `"use server"` directive, Zod validation, try-catch, `revalidatePath()`
-- ✅ Data Handling: Decimals as `String`, FIFO logic correct, Prisma transactions atomic
-- ✅ i18n: No hardcoded text, keys in `messages/{en,es}.json`, routing via `@/i18n/routing`
+- ✅ Data Handling: Prisma transactions atomic when needed
+- ✅ Idioma: textos coherentes en español (no i18n activo)
 - ✅ Security: Auth checks, input sanitization, no secrets exposed, no `console.log`
 - ✅ Code Style: ESLint compliance (double quotes, 4-space indent, 150 char lines)
 
@@ -97,7 +97,7 @@ For each user-facing change, consider:
 3. **Timing Issues**: What if user clicks submit twice rapidly? What if API call slow?
 4. **Authorization Bypass**: Can user access another user's data by manipulating IDs?
 5. **Data Corruption**: What if Decimal conversion fails? What if MongoDB transaction aborts?
-6. **Localization**: Does it work in both `en` and `es`? Are date/number formats correct?
+6. **Idioma**: ¿La UI está en español y sin textos/branding copiados de otros repos?
 7. **Mobile/Desktop**: Does responsive design break? Touch targets adequate?
 8. **Performance**: Does new query cause N+1 problem? Is pagination needed?
 

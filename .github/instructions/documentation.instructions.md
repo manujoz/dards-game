@@ -4,7 +4,7 @@ description: Guidelines for creating concise, structured, and interconnected pro
 applyTo: "docs/**/*.md"
 ---
 
-# Manu Overa - Investments Documentation Standards
+# Dards Game Documentation Standards
 
 <workflow>
 
@@ -53,8 +53,6 @@ const example = implementPattern();
 ```
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection
 
 ## Folder Organization
 
@@ -132,19 +130,9 @@ Every `.md` file in `docs/` must have header navigation:
 
 <footer>
 
-## Standard Footer
+## Footer
 
-All documentation files must end with:
-
-```markdown
----
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection
-```
-
-- Separated from content by `---`
-- Exact text as shown above
-- No variations or additions
+No se requiere un footer fijo de copyright en este repositorio.
 
 </footer>
 
@@ -210,7 +198,7 @@ Each folder in `docs/` must have a `README.md` that:
 
 # Architecture Documentation
 
-Overview of the Manu Overa - Investments Next.js architecture.
+Overview of the Dards Game architecture.
 
 ## Documents
 
@@ -224,8 +212,6 @@ Overview of the Manu Overa - Investments Next.js architecture.
 - [Components Documentation](../components/README.md)
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection
 ```
 
 </section_readme>
@@ -237,7 +223,7 @@ Overview of the Manu Overa - Investments Next.js architecture.
 - **NEVER** exceed 400 lines in a single documentation file
 - **NEVER** include complete code implementations
 - **NEVER** document obvious patterns (basic React, TypeScript syntax)
-- **NEVER** create documentation without header navigation and footer
+- **NEVER** create documentation without header navigation
 - **NEVER** create or update documentation without updating corresponding READMEs
 - **ALWAYS** include index for 3+ sections
 - **ALWAYS** link related documentation bidirectionally

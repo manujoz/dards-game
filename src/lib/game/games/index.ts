@@ -21,7 +21,7 @@ export const GAMES: Partial<Record<GameId, new () => GameLogic>> = {
 export function getGameLogic(id: GameId): GameLogic {
     const GameClass = GAMES[id];
     if (!GameClass) {
-        throw new Error(`Game logic not implemented for ${id}`);
+        throw new Error(`No hay lógica de juego implementada para ${id}`);
     }
     return new GameClass();
 }

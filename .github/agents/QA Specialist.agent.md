@@ -29,7 +29,7 @@ Follow comprehensive guidelines in [QA Validation Instructions](../instructions/
 - Code review checklist (TypeScript, components, Server Actions)
 - Functional testing scenarios (business logic, edge cases, user flows)
 - Integration testing protocols (database, API, authentication)
-- UI/UX validation (accessibility, responsive design, i18n)
+- UI/UX validation (accessibility, responsive design, idioma)
 - Performance metrics and security validation
 
 </operating_principles>
@@ -50,7 +50,7 @@ Execute in sequential order, use `todo` tool to track progress:
 - **TypeScript Safety**: Search for `any` types, verify proper interfaces from `src/types/`
 - **Component Architecture**: Check Server vs Client Components, `"use client"` directives
 - **Server Actions**: Verify `"use server"`, Zod validation, `revalidatePath()`, error handling
-- **Data Precision**: Confirm Decimal.js usage for financial calculations, String storage in MongoDB
+- **Domain Correctness**: Confirm motor de juego/score-mapper/calibración se comportan según reglas
 - **Standards Compliance**: ESLint rules, import order, naming conventions
 
 ### 3. Functional Testing
@@ -68,7 +68,7 @@ Execute in sequential order, use `todo` tool to track progress:
 ### 5. UI/UX Validation
 - **Accessibility**: Keyboard navigation, ARIA labels, semantic HTML, color contrast
 - **Responsive Design**: Test mobile/tablet/desktop breakpoints, touch targets, form layouts
-- **Internationalization**: Verify both locales (en, es), translation completeness, date/number formatting
+- **Idioma**: Verificar textos coherentes en español (no i18n activo)
 - **User Feedback**: Success toasts, loading states, error messages, confirmation dialogs
 
 ### 6. Performance Assessment
@@ -108,11 +108,9 @@ Execute in sequential order, use `todo` tool to track progress:
 ## Prioritized Testing Approach
 
 ### High Priority (Always Test)
-1. **Financial Calculations**: FIFO logic, profit/loss, portfolio metrics
-2. **Authentication/Authorization**: Session handling, data isolation by userId
-3. **Data Integrity**: CRUD operations, transactions, cascade deletes
-4. **Internationalization**: Both locales functional, translations complete
-5. **Decimal Precision**: String → Decimal conversions for money/crypto
+1. **Motor de juego**: reglas, turnos, bust, condiciones de victoria
+2. **Data Integrity**: CRUD admin (players/matches/rankings), transacciones cuando aplique
+3. **UI táctil**: interacción estable (sin scroll/zoom), responsive
 
 ### Medium Priority (Test When Applicable)
 1. **User Flows**: Multi-step processes (create asset → add transaction → view dashboard)
@@ -135,15 +133,10 @@ Use Playwright MCP tools for automated UI testing:
 
 ```typescript
 // Navigate to login page
-await playwright_navigate({ url: "http://localhost:3003/en/login" });
+await playwright_navigate({ url: "http://localhost:3010/game" });
 
-// Fill login form
-await playwright_fill({ selector: '[name="email"]', text: "manu.overa@gmail.com" });
-await playwright_fill({ selector: '[name="password"]', text: "password123" });
-
-// Submit and verify redirect
-await playwright_click({ selector: 'button[type="submit"]' });
-await playwright_wait({ selector: 'h1:has-text("Dashboard")' });
+// Open admin players
+await playwright_navigate({ url: "http://localhost:3010/players" });
 
 // Take screenshot for documentation
 await playwright_screenshot({ fullPage: true });

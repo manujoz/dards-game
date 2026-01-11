@@ -24,6 +24,7 @@ const eslintConfig = tseslint.config(
             "react-hooks/exhaustive-deps": "off",
             "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
             "no-unused-vars": "off",
+            "@next/next/no-img-element": "off",
             "prettier/prettier": [
                 "error",
                 {

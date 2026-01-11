@@ -201,8 +201,6 @@ refactor(engine): change turn validation logic
 
 ## 📄 Licencia
 
-**Manu Overa - Investments** © 2025 - Registered team under license protection
-
 ---
 
 **Desarrollado con**: Next.js 16 • React 19 • TypeScript • Prisma • Tailwind CSS

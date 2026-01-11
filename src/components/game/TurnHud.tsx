@@ -8,8 +8,14 @@ interface TurnHudProps {
 }
 
 function formatHit(hit: Throw["hit"]): string {
-    if (hit.multiplier === 0) return "MISS";
-    const segment = hit.segment === 25 ? "BULL" : hit.segment.toString();
+    if (hit.multiplier === 0) return "FALLO";
+
+    // Bull (25) no tiene triple en diana estándar. Usamos una notación compacta.
+    if (hit.segment === 25) {
+        return hit.multiplier === 2 ? "DB" : "B";
+    }
+
+    const segment = hit.segment.toString();
     if (hit.multiplier === 3) return `T${segment}`;
     if (hit.multiplier === 2) return `D${segment}`;
     return segment;
@@ -40,7 +46,7 @@ export function TurnHud({ gameState }: TurnHudProps) {
                 <div className="text-xs text-slate-500 mr-1">
                     <span className="text-slate-400">{currentPlayer.name}</span>
                     <span className="mx-1">•</span>
-                    <span>Round {currentRound}</span>
+                    <span>Ronda {currentRound}</span>
                 </div>
                 <div className="flex gap-2 justify-end">
                     {throws.map((t, i) => (
@@ -62,7 +68,7 @@ export function TurnHud({ gameState }: TurnHudProps) {
                 {currentTurn.throws.length > 0 && (
                     <div className="text-right">
                         <span className="bg-slate-900/80 text-slate-300 px-3 py-1 rounded-full text-sm font-mono border border-slate-700">
-                            Current: {currentTurn.throws.reduce((acc, t) => acc + t.points, 0)}
+                            Parcial: {currentTurn.throws.reduce((acc, t) => acc + t.points, 0)}
                         </span>
                     </div>
                 )}

@@ -67,8 +67,8 @@ Execute implementation plans with precision: analyze risks before coding, execut
 **ALWAYS**: Use `@Developer` delegation, provide file context, run verifications, pause on errors, follow `copilot-instructions.md`
 
 **Project Rules** (see [copilot-instructions.md](../copilot-instructions.md)):
-- ❌ API Routes, Float/Number decimals, missing `"use client"`/`"use server"`, hardcoded texts, `next/link`
-- ✅ Server Actions, String+Decimal.js, Zod validation, i18n (`getTranslations`/`useTranslations`), translations in `messages/*.json`
+- ❌ API Routes, missing `"use client"`/`"use server"`, hardcoded config values (usa variables de entorno)
+- ✅ Server Actions, Zod validation, lógica del motor pura y testeada
 
 **Delegation Format**: Include plan file, phase context, steps, files, verification criteria, request structured summary
 
@@ -103,7 +103,7 @@ Before marking phase complete, verify:
 - [ ] Server Actions include `"use server"`, validation, error handling
 - [ ] Client Components include `"use client"` if interactive
 - [ ] Decimal.js used for financial calculations
-- [ ] Internationalization applied (no hardcoded texts)
+- [ ] Textos en español (hardcode permitido si no hay i18n)
 - [ ] Tests exist and pass for new functionality
 - [ ] Documentation updated if needed
 

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Darts Game",
-    description: "Multiplayer darts game",
+    title: "Juego de dardos",
+    description: "Juego de dardos multijugador",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="es">
             <body className="antialiased">{children}</body>
         </html>
     );

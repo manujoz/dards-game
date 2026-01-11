@@ -1,11 +1,26 @@
 "use client";
 
-import type { GameScoreboardProps } from "@/types/components/game";
+import { Crown, Skull, Target } from "lucide-react";
 
 import { getGameLogic } from "@/lib/game/games";
 import { cn } from "@/lib/utils";
 
-import { Crown, Skull, Target } from "lucide-react";
+import type { GameScoreboardProps } from "@/types/components/game";
+import type { GameId } from "@/types/models/darts";
+
+const GAME_TYPE_LABELS: Record<GameId, string> = {
+    x01: "X01",
+    cricket: "Cricket",
+    round_the_clock: "Alrededor del reloj",
+    high_score: "Puntuación máxima",
+    shanghai: "Shanghai",
+    killer: "Asesino",
+    halve_it: "A la mitad",
+};
+
+function getGameTypeLabel(id: GameId): string {
+    return GAME_TYPE_LABELS[id] ?? id;
+}
 
 function formatScore(value: string | number): string {
     return typeof value === "number" ? String(value) : value;
@@ -100,7 +115,7 @@ export function GameScoreboard({ gameState, layout, isPaused, onOpenCricketMarks
         <aside className={cn("h-full w-[240px] max-w-[38vw] p-4", pointerEventsClassName)}>
             <div className="bg-slate-900/65 backdrop-blur rounded-2xl border border-slate-800 shadow-xl h-full flex flex-col overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-800">
-                    <div className="text-xs text-slate-400 uppercase tracking-wider">{scoreboard.gameType.toUpperCase()}</div>
+                    <div className="text-xs text-slate-400 uppercase tracking-wider">{getGameTypeLabel(scoreboard.gameType)}</div>
                     <div className="text-sm text-slate-300 mt-1">{scoreboard.roundIndicator}</div>
 
                     {scoreboard.gameType === "cricket" && onOpenCricketMarks && (
@@ -136,7 +151,7 @@ export function GameScoreboard({ gameState, layout, isPaused, onOpenCricketMarks
                                             {isWinner && <Crown className="h-4 w-4 text-yellow-400" />}
                                             {scoreboard.gameType === "killer" &&
                                                 r.details.length >= 3 &&
-                                                String(r.details[2]?.value) === "Killer" && <Skull className="h-4 w-4 text-red-400" />}
+                                                String(r.details[2]?.value) === "Asesino" && <Skull className="h-4 w-4 text-red-400" />}
                                         </div>
                                     </div>
 

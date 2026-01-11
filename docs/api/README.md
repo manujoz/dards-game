@@ -72,5 +72,3 @@ revalidatePath("/players"); // Refresca Server Components
 - [**Server Actions**](./server-actions.md) - Estructura, validación, manejo de errores
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

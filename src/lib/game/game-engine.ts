@@ -24,7 +24,7 @@ function createInitialPlayerStates(players: Player[], config: GameConfig): Playe
  */
 export function getCurrentPlayerState(state: GameState): PlayerState {
     const ps = state.playerStates.find((p) => p.playerId === state.currentPlayerId);
-    if (!ps) throw new Error("Current player state not found");
+    if (!ps) throw new Error("No se ha encontrado el estado del jugador actual");
     return ps;
 }
 
@@ -34,7 +34,7 @@ export const GameEngine = {
      */
     init(players: Player[], config: GameConfig): GameState {
         if (players.length === 0) {
-            throw new Error("At least one player is required");
+            throw new Error("Se requiere al menos un jugador");
         }
 
         const firstPlayer = players[0];

@@ -47,23 +47,15 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - ✅ Input validation with Zod schemas
 - ✅ Try-catch blocks with consistent error return structure
 - ✅ `revalidatePath("/")` after mutations
-- ✅ Decimal operations use `Decimal.js` (never Number for financial data)
-- ✅ MongoDB strings converted to Decimal for calculations
+- ✅ `revalidatePath()` en las rutas afectadas tras mutaciones
 
 ### Data Handling
 - ✅ Database queries use Prisma with proper error handling
-- ✅ Transactions used for atomic operations (Replica Set required)
-- ✅ Financial amounts stored as `String` in MongoDB
-- ✅ Decimal conversions: `toDecimal()` and `fromDecimal()` helpers
-- ✅ FIFO logic correctly implements TaxLot consumption
-- ✅ Date handling uses `DateTime` consistently
+- ✅ Transactions used for atomic operations cuando aplique
 
-### Internationalization (i18n)
-- ✅ No hardcoded text (use `getTranslations()` or `useTranslations()`)
-- ✅ Translation keys exist in `messages/en.json` and `messages/es.json`
-- ✅ Navigation uses `@/i18n/routing` (not `next/link` or `next/navigation`)
-- ✅ Locale parameter handled in routes when applicable
-- ✅ Date/number formatting locale-aware
+### Idioma
+- ✅ El producto está en **español** (no hay i18n activo en este repositorio)
+- ✅ Texto hardcodeado es aceptable; evitar mezclar idiomas y evitar copiar branding de otros repos
 
 ### Performance & Optimization
 - ✅ Unnecessary re-renders avoided (memoization when needed)
@@ -71,11 +63,9 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - ✅ Images use Next.js `<Image>` with proper optimization
 - ✅ Large lists paginated or virtualized
 - ✅ Database queries optimized (select only needed fields)
-- ✅ TanStack Query used for data fetching/caching
+
 
 ### Security
-- ✅ User authentication verified (NextAuth session checks)
-- ✅ Authorization implemented (user can only access own data)
 - ✅ Input sanitization prevents XSS/SQL injection
 - ✅ Sensitive data not exposed in client components
 - ✅ Environment variables properly configured
@@ -95,30 +85,21 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 ## Testing Scenarios
 
 ### Critical Business Logic
-- **FIFO Tax Lots**: Verify BUY creates TaxLot, SELL consumes oldest lots, `remainingQuantity` updates correctly
-- **Profit Calculations**: Validate `realizedProfit` formula: `(sellPrice - lotAvgPrice) * quantityUsed`
-- **Portfolio Metrics**: Confirm total value, PnL, ROI calculations use Decimal.js
-- **Asset Management**: Test create/update/delete with validation, duplicate prevention
+- **Motor de juego**: turnos, score, bust y condiciones de victoria
+- **Score mapper / calibración**: mapping de impacto y transformaciones
 
 ### Edge Cases
-- **Zero/Negative Amounts**: Reject invalid transaction amounts
-- **Insufficient Quantity**: Prevent SELL when quantity > available
-- **Empty Tax Lots**: Handle SELL when no TaxLots exist for asset
-- **Concurrent Transactions**: Verify MongoDB transaction isolation
-- **Decimal Precision**: Test with small amounts (0.00000001 crypto)
+- **Entradas inválidas**: Zod rechaza inputs fuera de rango
+- **Estados límite**: partidas sin jugadores, listas vacías, estados incompletos
 
 ### User Flows
-- **Authentication**: Login/logout, session persistence, protected routes
-- **Asset Lifecycle**: Create asset → Add transactions → View portfolio → Edit → Delete
-- **Multi-Currency**: Assets in different currencies display correct conversions
-- **Wallet Management**: Create wallets, assign assets, filter by wallet
-- **Language Switch**: UI updates correctly when locale changes
+- **Admin**: crear/listar jugadores, ver partidas, ver rankings
+- **Juego**: iniciar partida, registrar tiros, undo, finalizar
 
 ### Error Handling
-- **Network Failures**: Graceful degradation when Yahoo Finance API fails
 - **Database Errors**: User-friendly messages, no stack traces exposed
 - **Validation Errors**: Clear field-level error messages in forms
-- **Unauthorized Access**: Redirect to login, preserve intended destination
+
 
 </functional_testing>
 
@@ -126,29 +107,13 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 
 ## Integration Points
 
-### Server Action → Prisma → MongoDB
-- Verify data persists correctly in MongoDB
-- Confirm replica set transactions work atomically
-- Check indexes used for query performance
-- Validate cascade deletes (e.g., deleting asset removes transactions)
+### Server Action → Prisma
+- Verify data persists correctly
+- Confirm `revalidatePath()` tras mutaciones
 
-### Client Component → Server Action
-- TanStack Query mutations trigger revalidation
-- Optimistic updates work correctly
-- Error states handled gracefully
-- Loading states shown during async operations
-
-### Yahoo Finance Integration
-- Price fetching works for various asset types (crypto, stocks)
-- Cache strategy prevents API rate limits
-- Fallback to cached data when API unavailable
-- Composite pattern aggregates multiple providers
-
-### NextAuth Flow
-- Credentials provider authenticates correctly
-- Session persists across page refreshes
-- Middleware protects dashboard routes
-- Logout clears session properly
+### UI de juego
+- Validar interacción táctil (targets ≥44px)
+- Validar que no haya scroll/zoom accidental durante el juego
 
 </integration_testing>
 
@@ -170,11 +135,8 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - Forms stack vertically on small screens
 - Navigation adapts (hamburger menu on mobile)
 
-### Internationalization UX
-- Date formats locale-aware (DD/MM/YYYY vs MM/DD/YYYY)
-- Currency symbols correct for locale (€ vs $)
-- Number formatting respects locale (1,000.00 vs 1.000,00)
-- Text direction handled (future RTL support)
+### Idioma (UX)
+- Textos coherentes en español
 
 ### User Feedback
 - Success messages for mutations (toast notifications)
@@ -200,7 +162,6 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 ### Performance Testing Tools
 - Lighthouse CI for Core Web Vitals
 - Next.js build analyzer for bundle size
-- MongoDB profiler for slow queries
 - Browser DevTools Performance tab
 
 </performance_metrics>
@@ -209,15 +170,12 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 
 ## Security Checklist
 
-- **Authentication**: Verify session-based auth with NextAuth
-- **Authorization**: Users access only their own data (userId filter in queries)
 - **Input Validation**: Zod schemas validate all user inputs
 - **XSS Prevention**: React escapes by default, no `dangerouslySetInnerHTML`
-- **CSRF Protection**: NextAuth includes CSRF tokens
 - **Environment Variables**: No secrets hardcoded, `.env` in `.gitignore`
 - **Dependencies**: Run `pnpm audit` for vulnerabilities
 - **HTTPS**: Production uses HTTPS (Nginx Proxy Manager)
-- **Rate Limiting**: Consider implementing for login/register endpoints
+- **Rate Limiting**: Considerar rate limiting si se exponen endpoints públicos en el futuro
 
 </security_validation>
 
@@ -256,10 +214,9 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - Maintain >80% code coverage for critical paths
 
 ### Manual Verification
-- Test related features (e.g., if modifying transactions, test portfolio calculations)
-- Verify existing workflows still function (login → dashboard → create asset)
+- Verificar flujos existentes (admin + juego)
 - Check side effects (e.g., deleting asset should remove transactions)
-- Test in both locales (en, es)
+- No mezclar idiomas; el producto es ES
 
 ### Database Integrity
 - Verify migrations run cleanly
@@ -286,7 +243,6 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 
 ### Database Readiness
 - ✅ Prisma migrations applied: `pnpm prisma migrate deploy`
-- ✅ MongoDB replica set configured (required for transactions)
 - ✅ Indexes created for performance-critical queries
 - ✅ Seed data populated if needed
 
@@ -306,14 +262,12 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - **NEVER** fix bugs directly (report issues with clear reproduction steps for developers)
 - **NEVER** implement features or improvements (provide recommendations in reports)
 - **NEVER** approve code using `any` in TypeScript
-- **NEVER** allow hardcoded strings (must use i18n translations)
-- **NEVER** permit Number/Float for financial amounts (String + Decimal.js only)
-- **NEVER** skip validation for FIFO Tax Lot logic
+- **NEVER** permitir branding copiado de otros repos (p.ej. "Investments")
 - **NEVER** approve code without `revalidatePath()` after mutations
 - **NEVER** allow console.log in production code
 - **ALWAYS** verify Server Actions have `"use server"` directive
 - **ALWAYS** confirm Client Components have `"use client"` when needed
-- **ALWAYS** validate both locales work correctly
+- **ALWAYS** mantener el producto en español
 - **ALWAYS** test edge cases (zero amounts, concurrent operations, empty states)
 - **ALWAYS** run full test suite before approval
 - **ALWAYS** verify `pnpm build` succeeds

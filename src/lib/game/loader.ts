@@ -50,6 +50,13 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
                 },
             },
             throws: {
+                include: {
+                    participant: {
+                        include: {
+                            player: true,
+                        },
+                    },
+                },
                 orderBy: {
                     timestamp: "asc",
                 },
@@ -65,7 +72,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
         // `variant` stores the game config payload (JSON)
         config = JSON.parse(match.variant) as GameConfig;
     } catch (e) {
-        console.error("Failed to parse match config", e);
+        console.error("No se ha podido interpretar la configuración de la partida", e);
         return null;
     }
 
@@ -73,7 +80,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     if (!toGameId((config as { type?: string }).type ?? "")) {
         const fallbackType = toGameId(match.gameId);
         if (!fallbackType) {
-            console.error("Invalid match.gameId", match.gameId);
+            console.error("match.gameId inválido", match.gameId);
             return null;
         }
 
@@ -110,7 +117,7 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     try {
         gameState = GameEngine.init(players, config);
     } catch (e) {
-        console.error("Failed to init engine", e);
+        console.error("No se ha podido inicializar el motor", e);
         return null;
     }
 
@@ -123,61 +130,60 @@ export async function getMatchState(matchId: string): Promise<GameState | null> 
     const gameLogic = getGameLogic(config.type);
 
     // 4. Replay Throws
-    for (const dbThrow of match.throws) {
-        const multiplier = toHitMultiplier(dbThrow.multiplier);
+    // IMPORTANT: Turn advancement is user-confirmed. To restore accurately after refresh,
+    // we reconstruct turns from persisted (roundIndex, player) rather than auto-advancing after 3 darts.
+    let currentTurnKey: string | null = `${gameState.currentTurn.roundIndex}:${gameState.currentTurn.playerId}`;
 
-        // Map DB Throw to Hit (input for processThrow)
+    for (const dbThrow of match.throws) {
+        const playerId = dbThrow.participant?.player?.id;
+        if (!playerId) {
+            console.error("Al tiro le falta la relación participant.player", dbThrow.id);
+            continue;
+        }
+
+        const turnKey = `${dbThrow.roundIndex}:${playerId}`;
+        if (turnKey !== currentTurnKey) {
+            if (gameState.currentTurn.throws.length > 0) {
+                gameState.history.push(gameState.currentTurn);
+            }
+
+            const playerState = gameState.playerStates.find((ps) => ps.playerId === playerId);
+            const startScore = playerState ? playerState.score : 0;
+
+            gameState.currentPlayerId = playerId;
+            gameState.currentRound = dbThrow.roundIndex;
+            gameState.currentTurn = {
+                playerId,
+                roundIndex: dbThrow.roundIndex,
+                throws: [],
+                startScore,
+                endScore: startScore,
+                isBust: false,
+            };
+            currentTurnKey = turnKey;
+        }
+
+        const multiplier = toHitMultiplier(dbThrow.multiplier);
         const hit: Hit = {
             segment: dbThrow.segment,
             multiplier,
         };
 
-        // Process Throw (IMPORTANT: This mutates gameState player scores internally for 'x01' etc)
         const resultThrow = gameLogic.processThrow(gameState, hit);
-
-        // Override result values with DB values if necessary to ensure exact history match?
-        // Ideally they match. If we changed logic, using DB values for 'points' might be safer for history preservation,
-        // but 'processThrow' is needed to mutate the state (score) correctly for the current code version.
-        // Let's trust processThrow for state mutation, but maybe use DB for history consistency?
-        // Actually, let's use the result from processThrow to be consistent with current code instructions.
-
-        // Force timestamp from DB to preserve timeline
         resultThrow.timestamp = dbThrow.timestamp.getTime();
 
-        // Add to Engine State (history/turn management)
         gameState = GameEngine.addThrow(gameState, resultThrow);
 
-        // Update Turn End Score (Engine doesn't do this automatically for standard throws, only busts)
         const currentPlayer = gameState.playerStates.find((p) => p.playerId === gameState.currentPlayerId);
         if (currentPlayer) {
             gameState.currentTurn.endScore = currentPlayer.score;
         }
 
-        // Automatic Turn Switching Logic
-        // Replicate the client-side auto-switch rules
         if (resultThrow.isWin) {
             gameState.status = "completed";
             gameState.winnerId = gameState.currentPlayerId;
-            gameState.endedAt = dbThrow.timestamp.getTime(); // Use DB time
-            break; // Stop processing if won
-        } else if (gameState.currentTurn.throws.length >= 3 || resultThrow.isBust) {
-            // Check if this is the generic end of turn.
-            // We only switch turn if the match continued or if there are more throws in DB.
-            // But 'nextTurn' creates a new empty turn.
-            // If we are at the end of the list, we should still be in "waiting for next turn" state
-            // unless the match ended.
-
-            // If this is the last throw in DB, and match.status is active,
-            // we should probably switch turn so the UI shows the NEXT player ready to throw.
-            // If match is completed, we don't need to switch.
-
-            if (match.status !== "completed") {
-                gameState = GameEngine.nextTurn(gameState);
-            } else {
-                // Even if completed, if this throw didn't win, maybe someone resigned?
-                // Assuming standard flow:
-                gameState = GameEngine.nextTurn(gameState);
-            }
+            gameState.endedAt = dbThrow.timestamp.getTime();
+            break;
         }
     }
 

@@ -66,12 +66,12 @@ export class HalveItGame implements GameLogic {
     getScoreboard(state: GameState): Scoreboard {
         const config = state.config as HalveItConfig;
         const targets = config.targets || ["20", "16", "D7", "14", "18", "T10", "25"];
-        const targetStr = targets[(state.currentRound - 1) % targets.length] || "End";
+        const targetStr = targets[(state.currentRound - 1) % targets.length] || "Fin";
 
         return {
             gameType: "halve_it",
-            roundIndicator: `Round ${state.currentRound} (Target: ${targetStr})`,
-            headers: ["Score"],
+            roundIndicator: `Ronda ${state.currentRound} (Objetivo: ${targetStr})`,
+            headers: ["Puntos"],
             rows: state.playerStates.map((ps) => {
                 const player = state.players.find((p) => p.id === ps.playerId)!;
                 return {

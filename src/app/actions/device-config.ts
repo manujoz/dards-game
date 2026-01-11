@@ -63,10 +63,10 @@ export async function getDeviceConfig(): Promise<ActionResponse<ParsedDeviceConf
             },
         };
     } catch (error) {
-        console.error("Error getting device config:", error);
+        console.error("Error al obtener la configuración del dispositivo:", error);
         return {
             success: false,
-            message: "Failed to get device config",
+            message: "No se ha podido cargar la configuración del dispositivo",
         };
     }
 }
@@ -77,7 +77,7 @@ export async function updateCalibration(input: DeviceCalibration): Promise<Actio
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -107,10 +107,10 @@ export async function updateCalibration(input: DeviceCalibration): Promise<Actio
         // Return parsed
         return await getDeviceConfig();
     } catch (error) {
-        console.error("Error updating calibration:", error);
+        console.error("Error al actualizar la calibración:", error);
         return {
             success: false,
-            message: "Failed to update calibration",
+            message: "No se ha podido actualizar la calibración",
         };
     }
 }
@@ -121,7 +121,7 @@ export async function updatePreferences(input: DevicePreferences): Promise<Actio
         if (!validated.success) {
             return {
                 success: false,
-                message: "Validation failed",
+                message: "La validación ha fallado",
                 errors: validated.error.flatten().fieldErrors,
             };
         }
@@ -148,10 +148,10 @@ export async function updatePreferences(input: DevicePreferences): Promise<Actio
 
         return await getDeviceConfig();
     } catch (error) {
-        console.error("Error updating preferences:", error);
+        console.error("Error al actualizar las preferencias:", error);
         return {
             success: false,
-            message: "Failed to update preferences",
+            message: "No se han podido actualizar las preferencias",
         };
     }
 }

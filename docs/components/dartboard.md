@@ -147,5 +147,3 @@ useEffect(() => {
 - **Memoización** de imagen del tablero base
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

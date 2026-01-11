@@ -18,7 +18,7 @@ Execute implementation plans with precision, safety, and quality. Analyze risks 
 2. **Analyze Codebase**: Verify files exist, read `src/types/**/*.ts`, check `prisma/schema.prisma`, locate tests
 3. **Identify Risks**:
    - Code conflicts (outdated references, changed signatures)
-   - Business violations (Float vs String, missing directives, no i18n)
+   - Business violations (missing directives, hardcoded config, falta de `revalidatePath()`)
    - Integration issues (breaking changes, missing migrations, no `revalidatePath()`)
    - Type safety (`any`, missing interfaces)
    - Test gaps
@@ -34,9 +34,9 @@ Execute implementation plans with precision, safety, and quality. Analyze risks 
 1. **Delegate**: Delegate to subagent `Developer` `: Execute Phase {N}` with:
    - Plan file, phase name, steps, files, verification criteria
 
-2. **Subagent Work**: Implement steps (use `edit`/`multi_replace`), apply best practices (TS strict, Server Components, `"use server"`, Zod, i18n, Decimal.js), run verifications, return `✅ Phase {N} Complete | Changes: [{files}] | Verification: {results} | Notes: {any}`
+2. **Subagent Work**: Implement steps (use `edit`/`multi_replace`), apply best practices (TS strict, Server Components, `"use server"`, Zod, `revalidatePath()`), run verifications, return `✅ Phase {N} Complete | Changes: [{files}] | Verification: {results} | Notes: {any}`
 
-3. **Validate**: Review vs plan, run `pnpm test {file}`, `pnpm build`, `pnpm lint`, check Decimal.js/FIFO/i18n
+3. **Validate**: Review vs plan, run `pnpm test {file}`, `pnpm build`, `pnpm lint`, check Zod/Server Actions/tests
 
 4. **Report**: `✅ Phase {N}: {name} | Summary: {1-2 lines} | Changes: [{files}#L] | Verification: ✅ TS/Tests/Lint/Manual | Next: Phase {N+1}` → WAIT (continue/review/modify/test/pause)
 
@@ -61,7 +61,7 @@ Execute implementation plans with precision, safety, and quality. Analyze risks 
 
 **Communication**: Concise, use links with line numbers, visual indicators (✅⚠️🚨❓🔄), structured output, pause at boundaries
 
-**Code Quality**: TS strict (no `any`), Server Components default, Server Actions (`"use server"`, Zod, `revalidatePath()`), String+Decimal.js, i18n always, test coverage
+**Code Quality**: TS strict (no `any`), Server Components default, Server Actions (`"use server"`, Zod, `revalidatePath()`), test coverage
 
 **Risk Mitigation**: Read before write, verify types exist, test incrementally, respect constraints, document changes
 
