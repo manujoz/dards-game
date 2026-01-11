@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
+    env_file:
+      - .env.local
     volumes:
       - .:/app
       - /app/node_modules
@@ -13,7 +15,8 @@ services:
       - "3010:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL
+      - DIRECT_URL
     command: pnpm dev
     networks:
       - dards-dev-network

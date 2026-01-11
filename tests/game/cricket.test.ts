@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // tests/game/cricket.test.ts
 import { CricketGame } from "@/lib/game/games/cricket";
+import type { CricketPlayerStats } from "@/types/models/darts";
 import { CricketConfig } from "@/types/models/darts";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestState, mockPlayer } from "./test-utils";
@@ -27,6 +28,34 @@ describe("CricketGame Logic", () => {
             expect(stats.score).toBe(0);
             expect(stats.marks).toEqual({});
             expect(stats.closedNumbers).toEqual([]);
+        });
+    });
+
+    describe("Regression: runtime state without game.init", () => {
+        it("should not crash when player stats are empty", () => {
+            const players = [mockPlayer("A"), mockPlayer("B")];
+            const state = createTestState(defaultConfig, players);
+
+            // GameEngine.init creates playerStates with stats: {}.
+            // CricketGame must tolerate this shape (runtime loader path) and normalize it.
+            expect(() => game.processThrow(state, { segment: 20, multiplier: 1 })).not.toThrow();
+
+            const psA = state.playerStates[0];
+            const statsA = psA.stats as unknown as CricketPlayerStats;
+
+            expect(typeof statsA.marks).toBe("object");
+            expect(statsA.marks[20]).toBe(1);
+        });
+
+        it("should not crash rendering scoreboard when player stats are empty", () => {
+            const players = [mockPlayer("A"), mockPlayer("B")];
+            const state = createTestState(defaultConfig, players);
+
+            expect(() => game.getScoreboard(state)).not.toThrow();
+
+            const scoreboard = game.getScoreboard(state);
+            expect(scoreboard.rows).toHaveLength(2);
+            expect(scoreboard.rows[0].marks).toBeDefined();
         });
     });
 

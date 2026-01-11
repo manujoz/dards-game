@@ -62,6 +62,7 @@ pnpm start
 ## Documentación de Despliegue
 
 - [**Docker**](./docker.md) - Configuración de contenedores, volúmenes, troubleshooting
+- [**Netlify + Supabase (Postgres)**](./netlify.md) - Deploy en Netlify, variables de entorno y migraciones Prisma
 
 ---
 

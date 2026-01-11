@@ -5,14 +5,20 @@
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
+        "build:netlify": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm build",
         "start": "next start",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
+        "prisma:generate": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma generate'",
+        "prisma:migrate:deploy": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma migrate deploy'",
+        "prisma:migrate:dev": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma migrate dev'",
+        "prisma:seed": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma db seed'",
+        "postinstall": "prisma generate",
         "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
         "docker:build": "docker-compose -f docker-compose.dev.yml build",
         "docker:down": "docker-compose -f docker-compose.dev.yml down",
         "docker:reset": "docker-compose -f docker-compose.dev.yml down -v && docker-compose -f docker-compose.dev.yml up --build",
-        "test": "vitest"
+        "test": "vitest run"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
@@ -33,6 +39,7 @@
         "zod": "^3.23.8"
     },
     "devDependencies": {
+        "@netlify/plugin-nextjs": "^5.0.0",
         "@eslint/eslintrc": "^3.3.3",
         "@eslint/js": "^9.39.2",
         "@types/canvas-confetti": "^1.9.0",
@@ -48,8 +55,12 @@
         "prettier": "^3.7.4",
         "prisma": "^5.22.0",
         "tailwindcss": "^3.4.15",
+        "tsx": "^4.19.2",
         "typescript": "^5.6.3",
         "typescript-eslint": "^8.52.0",
         "vitest": "^2.1.5"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed.ts"
     }
 }

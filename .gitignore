@@ -4,5 +4,13 @@ node_modules
 .DS_Store
 .env
 .env.*
+!.env.example
 
 npm-debug.log*
+
+# SQLite (desarrollo local)
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm
+prisma/*.db-*

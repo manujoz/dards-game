@@ -2,6 +2,8 @@ import { getMatches, type MatchListEntry } from "@/app/actions/matches";
 import { format } from "date-fns";
 import { Trophy } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function MatchesPage() {
     const result = await getMatches();
     const matches = result.success ? result.data : [];

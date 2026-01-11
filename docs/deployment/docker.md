@@ -70,11 +70,9 @@ services:
             - /app/node_modules
             - sqlite_data:/app/prisma
         environment:
-            - DATABASE_URL=file:./dev.db
             - NODE_ENV=development
-
-volumes:
-    sqlite_data:
+            - DATABASE_URL
+            - DIRECT_URL
 ```
 
 ## Comandos Útiles

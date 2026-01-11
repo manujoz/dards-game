@@ -1,6 +1,23 @@
 import { CricketConfig, CricketPlayerStats, GameConfig, GameState, Hit, Player, Scoreboard, Throw } from "@/types/models/darts";
 import { GameLogic } from "./interface";
 
+function ensureCricketStats(playerState: GameState["playerStates"][number]): CricketPlayerStats {
+    const stats = playerState.stats as Partial<CricketPlayerStats> | undefined;
+
+    const normalized: CricketPlayerStats = {
+        mpr: typeof stats?.mpr === "number" ? stats.mpr : 0,
+        marks: stats?.marks && typeof stats.marks === "object" ? (stats.marks as Record<number, number>) : {},
+        closedNumbers: Array.isArray(stats?.closedNumbers) ? stats.closedNumbers : [],
+        score: typeof stats?.score === "number" ? stats.score : 0,
+    };
+
+    // Keep stats.score in sync with the playerState.score used by the UI.
+    normalized.score = playerState.score;
+
+    playerState.stats = normalized;
+    return normalized;
+}
+
 export class CricketGame implements GameLogic {
     init(config: GameConfig, players: Player[]): Partial<GameState> {
         return {
@@ -25,7 +42,7 @@ export class CricketGame implements GameLogic {
             throw new Error(`Player state not found for ${state.currentPlayerId}`);
         }
 
-        const stats = playerState.stats as CricketPlayerStats;
+        const stats = ensureCricketStats(playerState);
 
         // 1. Validate Hit (Is it a target number?)
         const targets = config.numbers || [20, 19, 18, 17, 16, 15, 25];
@@ -75,7 +92,7 @@ export class CricketGame implements GameLogic {
                 // Check if ALL opponents have closed this number
                 const opponents = state.playerStates.filter((p) => p.playerId !== state.currentPlayerId);
                 const allOpponentsClosed = opponents.every((op) => {
-                    const opStats = op.stats as CricketPlayerStats;
+                    const opStats = ensureCricketStats(op);
                     return (opStats.marks[hit.segment] || 0) >= 3;
                 });
 
@@ -88,7 +105,7 @@ export class CricketGame implements GameLogic {
                     if (config.mode === "cut_throat") {
                         // Point Penalty Mode: Add score to opponents who haven't closed
                         opponents.forEach((op) => {
-                            const opStats = op.stats as CricketPlayerStats;
+                            const opStats = ensureCricketStats(op);
                             if ((opStats.marks[hit.segment] || 0) < 3) {
                                 op.score += score;
                             }
@@ -140,7 +157,7 @@ export class CricketGame implements GameLogic {
             roundIndicator: `Round ${state.currentRound}`,
             headers: ["Player", "Score"], // Simplified headers for now
             rows: state.playerStates.map((p) => {
-                const stats = p.stats as CricketPlayerStats;
+                const stats = ensureCricketStats(p);
                 return {
                     playerId: p.playerId,
                     playerName: state.players.find((pl) => pl.id === p.playerId)?.name || "Unknown",

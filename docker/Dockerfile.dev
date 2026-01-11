@@ -12,6 +12,9 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package.json pnpm-lock.yaml* ./
 
+# Prisma schema/migrations are needed during `pnpm install` because postinstall runs `prisma generate`
+COPY prisma ./prisma
+
 RUN pnpm install
 
 COPY . .

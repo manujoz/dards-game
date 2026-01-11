@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { type RankingEntry } from "@/types/actions/rankings";
 import { Medal } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function RankingsPage(props: { searchParams: Promise<{ type?: string }> }) {
     const searchParams = await props.searchParams;
     const type = searchParams.type === "cricket" ? "cricket" : searchParams.type === "x01" ? "x01" : "all";
