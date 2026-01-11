@@ -129,12 +129,12 @@ export function GameController({ initialState }: GameControllerProps) {
         handleThrow(hit);
     }
 
-    const handleThrow = (hit: Hit) => {
-        if (!gameState) return;
-        if (gameState.status === "completed") return;
-        if (isAwaitingNextTurn) return;
-        if (isAwaitingNextTurnRef.current) return;
-        if (isPaused) return;
+    const handleThrow = (hit: Hit): boolean => {
+        if (!gameState) return false;
+        if (gameState.status === "completed") return false;
+        if (isAwaitingNextTurn) return false;
+        if (isAwaitingNextTurnRef.current) return false;
+        if (isPaused) return false;
 
         // Unlock audio on interaction
         soundManager.unlock();
@@ -214,6 +214,7 @@ export function GameController({ initialState }: GameControllerProps) {
         });
 
         setGameState(newState);
+        return true;
     };
 
     const handleNextTurn = () => {
@@ -308,6 +309,7 @@ export function GameController({ initialState }: GameControllerProps) {
                     <div className="flex-1 flex items-center justify-center p-4">
                         <div ref={boardContainerRef} className="w-full h-full aspect-square" style={boardMaxSizeStyle}>
                             <DartboardCanvas
+                                key={`${gameState.currentPlayerId}:${gameState.currentRound}`}
                                 onThrow={(hit) => handleThrow(hit)}
                                 disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused}
                             />

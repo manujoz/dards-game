@@ -1,4 +1,4 @@
-import type { GameState } from "@/types/models/darts";
+import type { GameState, Hit } from "@/types/models/darts";
 
 export interface CheckoutBustOverlayProps {
     open: boolean;
@@ -26,4 +26,19 @@ export interface HiddenTopBarProps {
     defaultShowNewGame?: boolean;
     canRestartSameConfig?: boolean;
     onRestartSameConfig?: () => void;
+}
+
+export interface DartboardCanvasThrowCoordinates {
+    x: number;
+    y: number;
+}
+
+export interface DartboardCanvasMarker {
+    x: number;
+    y: number;
+}
+
+export interface DartboardCanvasProps {
+    onThrow: (hit: Hit, coordinates: DartboardCanvasThrowCoordinates) => boolean;
+    disabled?: boolean;
 }

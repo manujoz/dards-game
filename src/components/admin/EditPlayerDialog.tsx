@@ -2,13 +2,15 @@
 
 import type { EditPlayerDialogProps } from "@/types/components";
 
+import { useEffect, useMemo, useState } from "react";
+
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import { updatePlayerWithAvatar } from "@/app/actions/players";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
 
 export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialogProps) {
     const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ export function EditPlayerDialog({ player, open, onOpenChange }: EditPlayerDialo
                     <DialogHeader>
                         <DialogTitle>Editar jugador</DialogTitle>
                         <DialogDescription>
-                            Actualiza el apodo y el avatar. La marca de admin se gestiona directamente en la base de datos.
+                            Actualiza el apodo y el avatar. Los permisos de administrador se definen al crear el jugador y requieren contraseña.
                         </DialogDescription>
                     </DialogHeader>
 

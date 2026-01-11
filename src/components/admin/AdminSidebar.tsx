@@ -2,16 +2,19 @@
 
 import type { AdminSidebarProps } from "@/types/components/admin";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore, useTransition } from "react";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { BookOpen, History, Home, Shield, Trophy, Users } from "lucide-react";
+import { BookOpen, History, Home, LogOut, Shield, Trophy, UserCog, Users } from "lucide-react";
 
+import { logout } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LAST_GAME_URL_STORAGE_KEY = "dards:lastGameUrl";
+const LAST_GAME_URL_EVENT = "dards:lastGameUrl";
 
 function isSafeReturnTo(value: string): boolean {
     return value.trim().startsWith("/game");
@@ -25,9 +28,35 @@ function withReturnTo(path: string, returnTo: string): string {
     return qs ? `${base}?${qs}` : base;
 }
 
+function readStoredReturnTo(): string | null {
+    try {
+        const raw = window.sessionStorage.getItem(LAST_GAME_URL_STORAGE_KEY);
+        return raw && isSafeReturnTo(raw) ? raw : null;
+    } catch {
+        return null;
+    }
+}
+
 export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+
+    const storedReturnTo = useSyncExternalStore(
+        (onStoreChange) => {
+            const handler = () => onStoreChange();
+            window.addEventListener("storage", handler);
+            window.addEventListener(LAST_GAME_URL_EVENT, handler);
+
+            return () => {
+                window.removeEventListener("storage", handler);
+                window.removeEventListener(LAST_GAME_URL_EVENT, handler);
+            };
+        },
+        () => readStoredReturnTo(),
+        () => null,
+    );
 
     const returnToFromQuery = useMemo(() => {
         const raw = searchParams.get("returnTo");
@@ -38,30 +67,34 @@ export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
         if (!returnToFromQuery) return;
         try {
             window.sessionStorage.setItem(LAST_GAME_URL_STORAGE_KEY, returnToFromQuery);
+            window.dispatchEvent(new Event(LAST_GAME_URL_EVENT));
         } catch {
             // ignore
         }
     }, [returnToFromQuery]);
 
-    const storedReturnTo = useMemo(() => {
-        if (typeof window === "undefined") return null;
-        try {
-            const raw = window.sessionStorage.getItem(LAST_GAME_URL_STORAGE_KEY);
-            return raw && isSafeReturnTo(raw) ? raw : null;
-        } catch {
-            return null;
-        }
-    }, [pathname]);
-
     const returnTo = returnToFromQuery ?? storedReturnTo ?? "/game";
 
     const items = [
         { href: "/admin", label: "Inicio", icon: Home },
+        { href: "/admin/account", label: "Cuenta", icon: UserCog },
         { href: "/players", label: "Jugadores", icon: Users },
         { href: "/matches", label: "Partidas", icon: History },
         { href: "/rankings", label: "Clasificación", icon: Trophy },
         { href: "/rules", label: "Reglas", icon: BookOpen },
     ] as const;
+
+    async function performLogout(): Promise<void> {
+        await logout();
+        router.push("/");
+        router.refresh();
+    }
+
+    function handleLogout(): void {
+        startTransition(() => {
+            void performLogout();
+        });
+    }
 
     return (
         <aside className="hidden w-72 flex-col bg-slate-900 text-slate-50 md:flex">
@@ -100,6 +133,18 @@ export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
                     >
                         Volver al juego
                     </Link>
+
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="mt-3 w-full justify-center gap-2 border border-slate-800 bg-slate-950/40 text-slate-100 hover:bg-slate-950/60 hover:text-slate-50"
+                        onClick={handleLogout}
+                        disabled={isPending}
+                        aria-label="Cerrar sesión"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Cerrar sesión
+                    </Button>
                 </div>
             </div>
         </aside>

@@ -1,11 +1,18 @@
 "use server";
 
+import { requireAdminSession } from "@/lib/auth/require-admin-session";
 import { prisma } from "@/lib/db/prisma";
 import { type RankingEntry } from "@/types/actions/rankings";
 import { type ActionResponse } from "@/types/actions/shared";
 
+function isUnauthorized(error: unknown): boolean {
+    return error instanceof Error && error.message === "No autorizado";
+}
+
 export async function getRankings(gameType: "x01" | "cricket" | "all" = "all"): Promise<ActionResponse<RankingEntry[]>> {
     try {
+        await requireAdminSession();
+
         // NOTE: Los cálculos reales de ranking (ELO, win-rate, etc.) se pueden implementar después.
         // Por ahora mostramos jugadores reales (nickname + avatar) para que la tabla sea útil.
 
@@ -47,6 +54,13 @@ export async function getRankings(gameType: "x01" | "cricket" | "all" = "all"): 
             data: rankings,
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al cargar la clasificación:", error);
         return {
             success: false,

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdminSession } from "@/lib/auth/require-admin-session";
 import { prisma } from "@/lib/db/prisma";
 import { deviceCalibrationSchema, devicePreferencesSchema } from "@/lib/validation/device-config";
 import { type ActionResponse } from "@/types/actions/shared";
@@ -15,8 +16,14 @@ export interface ParsedDeviceConfig extends Omit<DeviceConfig, "calibration" | "
     preferences: DevicePreferences;
 }
 
+function isUnauthorized(error: unknown): boolean {
+    return error instanceof Error && error.message === "No autorizado";
+}
+
 export async function getDeviceConfig(): Promise<ActionResponse<ParsedDeviceConfig>> {
     try {
+        await requireAdminSession();
+
         let config = await prisma.deviceConfig.findFirst();
 
         if (!config) {
@@ -63,6 +70,13 @@ export async function getDeviceConfig(): Promise<ActionResponse<ParsedDeviceConf
             },
         };
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al obtener la configuración del dispositivo:", error);
         return {
             success: false,
@@ -73,6 +87,8 @@ export async function getDeviceConfig(): Promise<ActionResponse<ParsedDeviceConf
 
 export async function updateCalibration(input: DeviceCalibration): Promise<ActionResponse<ParsedDeviceConfig>> {
     try {
+        await requireAdminSession();
+
         const validated = deviceCalibrationSchema.safeParse(input);
         if (!validated.success) {
             return {
@@ -107,6 +123,13 @@ export async function updateCalibration(input: DeviceCalibration): Promise<Actio
         // Return parsed
         return await getDeviceConfig();
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al actualizar la calibración:", error);
         return {
             success: false,
@@ -117,6 +140,8 @@ export async function updateCalibration(input: DeviceCalibration): Promise<Actio
 
 export async function updatePreferences(input: DevicePreferences): Promise<ActionResponse<ParsedDeviceConfig>> {
     try {
+        await requireAdminSession();
+
         const validated = devicePreferencesSchema.safeParse(input);
         if (!validated.success) {
             return {
@@ -148,6 +173,13 @@ export async function updatePreferences(input: DevicePreferences): Promise<Actio
 
         return await getDeviceConfig();
     } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
         console.error("Error al actualizar las preferencias:", error);
         return {
             success: false,

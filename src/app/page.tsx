@@ -1,7 +1,25 @@
-import { StartGameButton } from "@/components/home/StartGameButton";
+import { cookies } from "next/headers";
 import Image from "next/image";
 
-export default function Home() {
+import { AdminLoginForm } from "@/components/home/AdminLoginForm";
+import { StartGameButton } from "@/components/home/StartGameButton";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
+import { sanitizeReturnTo } from "@/lib/validation/auth";
+
+export const dynamic = "force-dynamic";
+
+interface HomePageProps {
+    searchParams: Promise<{ returnTo?: string }>;
+}
+
+export default async function Home({ searchParams }: HomePageProps) {
+    const { returnTo: returnToRaw } = await searchParams;
+    const returnTo = sanitizeReturnTo(returnToRaw);
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const session = token ? await verifySessionToken(token) : null;
+
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 flex flex-col items-center justify-center">
             {/* Background Image with Overlay */}
@@ -21,15 +39,19 @@ export default function Home() {
                     </p>
                 </div>
 
-                <div className="mt-8 animate-in slide-in-from-bottom-4 duration-1000 delay-300">
-                    <div className="p-1 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 shadow-2xl shadow-amber-900/20">
-                        <div className="bg-slate-950 rounded-[10px] p-2">
-                            <StartGameButton
-                                label="Empezar partida"
-                                className="w-full bg-transparent hover:bg-white/10 text-white border border-white/10 uppercase tracking-widest"
-                            />
+                <div className="mt-8 animate-in slide-in-from-bottom-4 duration-1000 delay-300 w-full flex justify-center">
+                    {session ? (
+                        <div className="p-1 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 shadow-2xl shadow-amber-900/20 w-full max-w-md">
+                            <div className="bg-slate-950 rounded-[10px] p-2">
+                                <StartGameButton
+                                    label="Empezar partida"
+                                    className="w-full bg-transparent hover:bg-white/10 text-white border border-white/10 uppercase tracking-widest"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <AdminLoginForm returnTo={returnTo} />
+                    )}
                 </div>
             </main>
 

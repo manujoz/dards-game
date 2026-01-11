@@ -1,70 +1,120 @@
-# Reglas de Killer
+# Killer
 
 ## Visión General
 
-Juego de supervivencia. A los jugadores se les asigna un número único. Primero deben convertirse en un "Killer" golpeando el doble de su número, luego eliminan oponentes golpeando sus números.
+Killer es un juego de eliminación y supervivencia. Cada jugador tiene asignado un número único en la diana y debe convertirse en "Killer" para poder atacar a sus oponentes. El último jugador con vidas restantes gana.
 
 ## Configuración
 
-- **Vidas**: 3, 5 (por defecto).
-- **Modo de Asignación**: Selección Manual o Aleatoria (Números únicos 1-20).
-- **Auto-Suicidio**: Desactivado (por defecto).
+### Vidas
 
-## Puntuación / Mecánica
+- **3 vidas**: Partida rápida
+- **5 vidas**: Estándar (por defecto)
 
-1.  **Estado**:
-    - **Normal**: No puede herir a otros. Objetivo: Golpear Doble de su número para convertirse en Killer.
-    - **Killer**: Puede herir a otros. Objetivo: Golpear números de Oponentes.
-2.  **Convertirse en Killer**:
-    - Un jugador Normal debe golpear el **Doble** de su número asignado.
-    - Una vez Killer, permanece Killer (a menos que las reglas especifiquen reinicio, v1: permanece Killer).
-3.  **Atacando**:
-    - Un **Killer** lanza a un número de oponente.
-    - **Impacto**: Reduce las vidas del oponente.
-        - Simple: -1 Vida.
-        - Doble: -2 Vidas.
-        - Triple: -3 Vidas.
-4.  **Eliminación**: Cuando las vidas llegan a 0 o menos, el jugador es eliminado.
+### Asignación de Números
 
-## Condiciones de Victoria
+Cada jugador recibe un número único del 1 al 20:
 
-- El último jugador (o equipo) con vidas restantes gana.
+- **Selección Manual**: Cada jugador elige su número
+- **Aleatoria**: El sistema asigna números al azar
 
-## Casos Especiales
+### Opciones Adicionales
 
-- **Exceso de daño**: Llevar un oponente de 1 vida a -2 no conlleva penalización/bonificación. Solo eliminado.
-- **Golpear su propio número (Killer)**: Sin efecto (a menos que se especifique lo contrario).
-- **Golpear su propio número (Normal)**: Sin efecto.
-- **Golpear jugador muerto**: Sin efecto.
+- **Auto-Suicidio**: Desactivado por defecto (golpear tu propio número como Killer no te quita vidas)
 
-## Escenarios Canónicos (Dorados)
+## Mecánica del Juego
 
-### Escenario 1: Convirtiéndose en Killer
+### Estados del Jugador
 
-_Config: Vidas 5. Número del Jugador A: 10._
-**Estado**: El Jugador A es Normal.
-**Turno**:
+**Estado Normal**
 
-1.  **Dardo 1**: 10 Simple. (Sin efecto).
-2.  **Dardo 2**: 10 Doble. (Cambio de Estado -> **KILLER**).
-3.  **Dardo 3**: 10 Simple. (Auto-impacto como killer -> Sin efecto).
-    **Resultado**: A es ahora Killer. Vidas: 5.
+- No puedes atacar a otros jugadores
+- Tu objetivo: Golpear el **doble** de tu número asignado para convertirte en Killer
+- Los impactos en otros números no tienen efecto
 
-### Escenario 2: Atacando
+**Estado Killer**
 
-_Config: Vidas 5. Jugador A es Killer (Núm 10). Jugador B (Núm 20) tiene 3 Vidas._
-**Turno (Jugador A)**:
+- Puedes atacar a otros jugadores
+- Una vez que eres Killer, permaneces como Killer el resto de la partida
+- Tu objetivo: Eliminar a todos los oponentes
 
-1.  **Dardo 1**: 20 Simple. (Impacto en B -> B pierde 1 vida).
-2.  **Dardo 2**: 20 Triple. (Impacto en B -> B pierde 3 vidas).
-    **Resultado**: Vidas de B: 3 - 1 - 3 = -1 -> **ELIMINADO**.
+### Cómo Convertirse en Killer
 
-### Escenario 3: Turno Mixto
+Debes acertar el **doble** de tu número asignado:
 
-_Config: Vidas 5. A (10) Normal, B (20) Normal._
-**Turno (Jugador A)**:
+- Si tu número es el 10, debes golpear el **Doble 10**
+- Los simples o triples de tu número no te convierten en Killer
+- Una vez que aciertas tu doble, inmediatamente te conviertes en Killer
 
-1.  **Dardo 1**: 20 Triple. (A no es killer, golpea B -> Sin efecto).
-2.  **Dardo 2**: 10 Doble. (A se convierte en **KILLER**).
-3.  **Dardo 3**: 20 Simple. (A es killer, golpea B -> B pierde 1 vida).
-    **Resultado**: A: Killer. B: 4 Vidas.
+### Sistema de Ataque
+
+Cuando eres Killer, cada impacto en el número de un oponente le quita vidas:
+
+- **Simple**: -1 vida
+- **Doble**: -2 vidas
+- **Triple**: -3 vidas
+
+### Eliminación
+
+Un jugador es eliminado cuando sus vidas llegan a 0 o menos.
+
+## Cómo Ganar
+
+El último jugador (o equipo) que conserve al menos 1 vida es el ganador.
+
+## Reglas Especiales
+
+- **Exceso de daño**: Si un ataque quita más vidas de las que le quedan al oponente, simplemente es eliminado (sin bonificación extra)
+- **Golpear tu propio número siendo Killer**: No tiene efecto (salvo que se active la opción Auto-Suicidio)
+- **Golpear tu propio número siendo Normal**: No tiene efecto
+- **Golpear a un jugador eliminado**: No tiene efecto
+
+## Ejemplos de Juego
+
+### Ejemplo 1: Convertirse en Killer
+
+**Configuración**: 5 vidas. Número del Jugador A: 10  
+**Estado inicial**: Jugador A es Normal
+
+**Turno del Jugador A:**
+
+1. **Primer dardo**: 10 Simple → Sin efecto (necesitas el doble)
+2. **Segundo dardo**: 10 Doble → **¡Te conviertes en Killer!**
+3. **Tercer dardo**: 10 Simple → Sin efecto (golpeas tu propio número siendo Killer)
+
+**Resultado**: A es ahora Killer con 5 vidas.
+
+---
+
+### Ejemplo 2: Atacar y eliminar
+
+**Configuración**: 5 vidas  
+**Situación**:
+
+- Jugador A es Killer (número 10)
+- Jugador B tiene el número 20 y le quedan 3 vidas
+
+**Turno del Jugador A:**
+
+1. **Primer dardo**: 20 Simple → B pierde 1 vida (le quedan 2)
+2. **Segundo dardo**: 20 Triple → B pierde 3 vidas (resultado: -1)
+
+**Resultado**: Jugador B es **eliminado**.
+
+---
+
+### Ejemplo 3: Turno mixto (convertirse y atacar)
+
+**Configuración**: 5 vidas  
+**Situación**:
+
+- Jugador A (número 10) es Normal
+- Jugador B (número 20) es Normal con 5 vidas
+
+**Turno del Jugador A:**
+
+1. **Primer dardo**: 20 Triple → Sin efecto (A aún no es Killer)
+2. **Segundo dardo**: 10 Doble → **A se convierte en Killer**
+3. **Tercer dardo**: 20 Simple → B pierde 1 vida
+
+**Resultado**: A es Killer. B tiene 4 vidas.

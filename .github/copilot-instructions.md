@@ -10,6 +10,41 @@ description: General project instructions for Darts game
 
 Video juego de dardos para pantallas táctiles con diferentes modos de juego y multijugador por turnos.
 
+## Technology Stack
+
+- **Framework**: Next.js 16 (App Router) con React 19
+- **Language**: TypeScript 5.6 (strict mode)
+- **Database**: PostgreSQL con Prisma ORM
+- **UI**: Tailwind CSS + shadcn/ui (Radix UI primitives)
+- **Testing**: Vitest para lógica de juego
+- **Validation**: Zod schemas
+- **Deployment**: Netlify con PostgreSQL en Neon
+- **Icons**: Lucide React
+- **Audio**: HTML5 Audio API (canvas-confetti para efectos)
+
+## Project Structure
+
+- `/src/app`: Next.js App Router (pages, layouts, Server Actions)
+- `/src/components`: React components organizados por dominio (admin, game, home, ui)
+- `/src/lib`: Lógica de negocio pura (game engine, calibración, audio, DB client)
+- `/src/types`: Type definitions organizadas por dominio
+- `/prisma`: Schema y migrations para PostgreSQL
+- `/tests`: Tests unitarios con Vitest (game engine, score mapper, calibración)
+- `/docs`: Documentación del proyecto (architecture, rules, components, deployment)
+- `/public/sounds`: Assets de audio para efectos de juego
+
+## Game Modes Available
+
+**x01**: 301/501/701 con variantes de checkout (double-out, master-out, straight-out)
+**Cricket**: Score en números 15-20 y bullseye, marcar 3 veces para cerrar
+**Shanghai**: Secuencia por rondas (ronda 1 → solo cuenta segmento 1, etc.)
+**Round the Clock**: Golpear secuencialmente 1-20 más bullseye
+**High Score**: Máxima puntuación en 3 dardos por ronda
+**Halve It**: Targets por ronda, fallar divide score por 2
+**Killer**: Modo eliminación con vidas asignadas por segmento
+
+</project_overview>
+
 <coding_standards>
 
 ## TypeScript Configuration
@@ -19,6 +54,14 @@ Video juego de dardos para pantallas táctiles con diferentes modos de juego y m
 - **Strict Mode**: Enabled
 - **JSX**: react-jsx
 - **Path Aliases**: `@/*` → `./src/*`
+
+## Type System Organization
+
+- **Domain Types**: Organizados en `/src/types` por feature (models, actions, components)
+- **Model Types**: Core domain types en `models/darts.ts` (GameState, PlayerState, Throw, Turn)
+- **Action Types**: Return types para Server Actions en `actions/*.ts`
+- **Component Props**: Component-specific types en `components/*.ts`
+- **Type Exports**: Centralizar exports en `types/index.ts`
 
 ## ESLint Rules
 
@@ -39,13 +82,52 @@ Video juego de dardos para pantallas táctiles con diferentes modos de juego y m
 
 ## Import Order
 
-5. Type imports (último)
-1. React imports
-2. Third-party libraries
-3. Alias imports (@/components, @/lib, etc.)
-4. Relative imports
+Mantener grupos separados con una línea en blanco entre cada categoría:
+
+1. Type imports (types e interfaces)
+2. React imports
+3. Third-party libraries (ordenadas alfabéticamente dentro del grupo)
+4. Alias imports (@/components, @/lib, etc.)
+5. Relative imports (./components, ../utils, etc.)
 
 </coding_standards>
+
+<architecture>
+
+## Core Architecture Patterns
+
+### Game Engine (Pure Functions)
+- **Location**: `/src/lib/game/game-engine.ts`
+- **Pattern**: Immutable state transformations
+- **State Flow**: GameState → Action → NewGameState
+- **Testing**: Full coverage con Vitest
+
+### Game Mode Implementations
+- **Location**: `/src/lib/game/games/*.ts`
+- **Interface**: Unified IGameMode interface
+- **Modes**: x01, cricket, shanghai, round-the-clock, high-score, halve-it, killer
+- **Pattern**: Strategy pattern con handlers específicos por modo
+
+### Server Actions Pattern
+- **Location**: `/src/app/actions/*.ts`
+- **Directive**: Iniciar con `"use server"`
+- **Return Type**: Consistent `{ success: boolean; data?: T; error?: string }`
+- **Validation**: Zod schemas antes de DB operations
+- **Revalidation**: Usar `revalidatePath()` después de mutaciones
+
+### Component Organization
+- **Admin Components**: CRUD operations, form dialogs, data tables
+- **Game Components**: DartboardCanvas, GameController, scoreboards, overlays
+- **UI Components**: shadcn/ui primitives (button, dialog, dropdown-menu, input)
+- **Pattern**: Client components con `"use client"`, Server components por defecto
+
+### Database Layer
+- **ORM**: Prisma Client
+- **Models**: Player, Match, MatchTeam, MatchParticipant, Throw, DeviceConfig
+- **Patterns**: Cascade deletes, JSON fields para config/calibration
+- **Client**: Singleton en `/src/lib/db/prisma.ts`
+
+</architecture>
 
 
 <workflow_guidelines>
@@ -81,23 +163,27 @@ Format: `type(scope): prefix subject`
 
 <critical_constraints>
 
+## Server Actions & Next.js
 
 - ❌ **NEVER**: Usar API routes (Next.js Pages Router pattern) - usar Server Actions
 - ❌ **NEVER**: Hardcodear valores de configuración - usar variables de entorno
 - ❌ **NEVER**: Crear Client Components sin `"use client"` directive
 - ❌ **NEVER**: Olvidar `revalidatePath()` después de mutaciones
-- ❌ **NEVER**: Usar *any* en TypeScript - siempre tipar correctamente
-- ❌ **NEVER**: Hacer console.log en producción - permitido solo warn/error
-
-
-
 - ✅ **ALWAYS**: Iniciar Server Actions con `"use server"`
-- ✅ **ALWAYS**: Mantener la lógica del motor de juego pura y testeada (Vitest)
 - ✅ **ALWAYS**: Usar `try-catch` en Server Actions con retorno consistente
 - ✅ **ALWAYS**: Validar inputs con Zod antes de operaciones DB
-- ✅ **ALWAYS**: Incluir healthchecks cuando haya configuración de despliegue/infra
-- ✅ **ALWAYS**: Escribir tests para lógica crítica (motor de juego, score-mapper, calibración)
-- ✅ **ALWAYS**: Seguir convenciones de commit para historial claro
+
+## TypeScript & Code Quality
+
+- ❌ **NEVER**: Usar *any* en TypeScript - siempre tipar correctamente
+- ❌ **NEVER**: Hacer console.log en producción - permitido solo warn/error
 - ✅ **ALWAYS**: Tipar correctamente en TypeScript sin usar any, siempre definir tipos e interfaces siguiendo las instrucciones
+- ✅ **ALWAYS**: Seguir convenciones de commit para historial claro
+
+## Game Engine & Testing
+
+- ✅ **ALWAYS**: Mantener la lógica del motor de juego pura y testeada (Vitest)
+- ✅ **ALWAYS**: Escribir tests para lógica crítica (motor de juego, score-mapper, calibración)
+- ✅ **ALWAYS**: Incluir healthchecks cuando haya configuración de despliegue/infra
 
 </critical_constraints>

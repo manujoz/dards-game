@@ -18,6 +18,9 @@ pnpm dev
 
 **Accesos**:
 
+- **Home (login admin)**: http://localhost:3010/
+- Tras iniciar sesión como admin, el resto de rutas quedan accesibles.
+
 - **Juego**: http://localhost:3010/game
 - **Admin Jugadores**: http://localhost:3010/players
 - **Admin Partidas**: http://localhost:3010/matches
@@ -137,12 +140,21 @@ pnpm test             # Vitest
 
 ## 🔧 Configuración
 
+### 🔐 Autenticación de Admin
+
+- El login de admin vive en la **home** (`/`).
+- Todas las rutas excepto `/` están protegidas por un **guard global** (middleware). Si no hay sesión admin válida, redirige a `/`.
+- La sesión se guarda en una cookie **HttpOnly** con un **JWT HS256** firmado con `AUTH_SECRET`.
+- La contraseña del admin se guarda en base de datos en `players.password` como **hash bcrypt** y **no se expone al cliente**.
+- (Opcional) La cuenta admin puede cambiar su contraseña en: `/admin/account`.
+
 ### Variables de Entorno
 
 ```env
 # .env.local
 DATABASE_URL="postgresql://USER:PASSWORD@POOLER_HOST:6543/postgres?pgbouncer=true&sslmode=require&connection_limit=1&pool_timeout=0"
 DIRECT_URL="postgresql://USER:PASSWORD@DB_HOST:5432/postgres?sslmode=require"
+AUTH_SECRET="cambia-esto-por-un-secreto-largo-y-aleatorio"
 NODE_ENV="development"
 ```
 
