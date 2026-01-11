@@ -3,7 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --turbopack",
+        "dev": "next dev --webpack --port 3050",
+        "dev:turbopack": "next dev --turbopack --port 3050",
         "build": "next build",
         "build:netlify": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm build",
         "start": "next start",
