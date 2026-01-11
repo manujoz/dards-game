@@ -21,3 +21,9 @@ export interface CricketMarksOverlayProps {
     gameState: GameState;
     onClose: () => void;
 }
+
+export interface HiddenTopBarProps {
+    defaultShowNewGame?: boolean;
+    canRestartSameConfig?: boolean;
+    onRestartSameConfig?: () => void;
+}

@@ -2,7 +2,7 @@
 description: General project instructions for Darts game
 ---
 
-# Investments - Next.js Project
+# Dards Game - Next.js Project
 
 <project_overview>
 
@@ -31,7 +31,7 @@ Video juego de dardos para pantallas táctiles con diferentes modos de juego y m
 
 ## Naming Conventions
 
-- **Components**: PascalCase (AssetManager, Dashboard)
+- **Components**: PascalCase (GameController, PlayerList)
 - **Files**: kebab-case para utils, PascalCase para componentes
 - **Functions**: camelCase (createAsset, getPortfolio)
 - **Constants**: UPPER_SNAKE_CASE
@@ -66,18 +66,16 @@ Video juego de dardos para pantallas táctiles con diferentes modos de juego y m
 
 ## Commit Convention (Commitlint)
 
-Format: `type(INV-###): prefix subject`
+Format: `type(scope): prefix subject`
 
 **Types:** `build`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`, `chore`
 
 **Prefixes:** `add`, `fix`, `resolve`, `update`, `test`, `change`, `remove`, `panic`, `close`, `create`
 
 **Examples:**
-- `feat(INV-123): add new gallery component`
-- `fix(INV-456): update API error handling`
-- `refactor(INV-789): change drivers data structure`
-
-**Note**: Issue ID `(INV-###)` is mandatory for all commits
+- `feat(game): add rules admin section`
+- `fix(engine): resolve bust edge case in x01`
+- `refactor(ui): update admin navigation layout`
 
 </git_commits>
 
@@ -85,21 +83,20 @@ Format: `type(INV-###): prefix subject`
 
 
 - ❌ **NEVER**: Usar API routes (Next.js Pages Router pattern) - usar Server Actions
-- ❌ **NEVER**: Almacenar decimales como Number/Float en MongoDB - usar String
+- ❌ **NEVER**: Hardcodear valores de configuración - usar variables de entorno
 - ❌ **NEVER**: Crear Client Components sin `"use client"` directive
 - ❌ **NEVER**: Olvidar `revalidatePath()` después de mutaciones
-- ❌ **NEVER**: Ejecutar operaciones MongoDB sin Replica Set para transacciones
-- ❌ **NEVER**: Hardcodear valores de configuración - usar variables de entorno
-- ❌ **NEVER**: Hacer console.log en producción - permitido solo warn/error
 - ❌ **NEVER**: Usar *any* en TypeScript - siempre tipar correctamente
+- ❌ **NEVER**: Hacer console.log en producción - permitido solo warn/error
+
 
 
 - ✅ **ALWAYS**: Iniciar Server Actions con `"use server"`
-- ✅ **ALWAYS**: Convertir String → Decimal para cálculos precisos
+- ✅ **ALWAYS**: Mantener la lógica del motor de juego pura y testeada (Vitest)
 - ✅ **ALWAYS**: Usar `try-catch` en Server Actions con retorno consistente
 - ✅ **ALWAYS**: Validar inputs con Zod antes de operaciones DB
 - ✅ **ALWAYS**: Incluir healthchecks cuando haya configuración de despliegue/infra
-- ✅ **ALWAYS**: Escribir tests para lógica de negocio crítica (Tax Lots, strategies)
+- ✅ **ALWAYS**: Escribir tests para lógica crítica (motor de juego, score-mapper, calibración)
 - ✅ **ALWAYS**: Seguir convenciones de commit para historial claro
 - ✅ **ALWAYS**: Tipar correctamente en TypeScript sin usar any, siempre definir tipos e interfaces siguiendo las instrucciones
 

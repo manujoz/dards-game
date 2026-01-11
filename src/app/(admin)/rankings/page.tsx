@@ -1,13 +1,27 @@
 import { getRankings } from "@/app/actions/rankings";
 import { cn } from "@/lib/utils";
 import { type RankingEntry } from "@/types/actions/rankings";
-import { Medal } from "lucide-react";
+import { Medal, User } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function RankingsPage(props: { searchParams: Promise<{ type?: string }> }) {
+function isSafeReturnTo(value: string): boolean {
+    return value.trim().startsWith("/game");
+}
+
+function withReturnTo(path: string, returnTo: string): string {
+    const [base, query] = path.split("?");
+    const params = new URLSearchParams(query ?? "");
+    params.set("returnTo", returnTo);
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+}
+
+export default async function RankingsPage(props: { searchParams: Promise<{ type?: string; returnTo?: string }> }) {
     const searchParams = await props.searchParams;
     const type = searchParams.type === "cricket" ? "cricket" : searchParams.type === "x01" ? "x01" : "all";
+    const returnTo = typeof searchParams.returnTo === "string" && isSafeReturnTo(searchParams.returnTo) ? searchParams.returnTo : null;
 
     const result = await getRankings(type);
     const rankings = result.success ? result.data : [];
@@ -16,16 +30,16 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Rankings</h1>
-                    <p className="text-slate-500">Top players by game mode.</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clasificación</h1>
+                    <p className="text-slate-500">Mejores jugadores por modo de juego.</p>
                 </div>
             </div>
 
             <div>
                 <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-                    <TabLink current={type} target="all" label="All Games" />
-                    <TabLink current={type} target="x01" label="X01" />
-                    <TabLink current={type} target="cricket" label="Cricket" />
+                    <TabLink current={type} target="all" label="Todos" returnTo={returnTo} />
+                    <TabLink current={type} target="x01" label="X01" returnTo={returnTo} />
+                    <TabLink current={type} target="cricket" label="Cricket" returnTo={returnTo} />
                 </div>
             </div>
 
@@ -35,10 +49,10 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
                         <thead className="bg-slate-50 text-slate-500">
                             <tr>
                                 <th className="h-12 w-12 px-4 font-medium">#</th>
-                                <th className="h-12 px-4 font-medium">Player</th>
-                                <th className="h-12 px-4 font-medium text-right">Rating</th>
-                                <th className="h-12 px-4 font-medium text-right">Win Rate</th>
-                                <th className="h-12 px-4 font-medium text-right">Matches</th>
+                                <th className="h-12 px-4 font-medium">Jugador</th>
+                                <th className="h-12 px-4 font-medium text-right">Puntuación</th>
+                                <th className="h-12 px-4 font-medium text-right">% victorias</th>
+                                <th className="h-12 px-4 font-medium text-right">Partidas</th>
                                 {type !== "cricket" && <th className="h-12 px-4 font-medium text-right">PPD</th>}
                                 {type !== "x01" && <th className="h-12 px-4 font-medium text-right">MPR</th>}
                             </tr>
@@ -47,7 +61,7 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
                             {rankings?.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="h-24 text-center text-slate-500">
-                                        No rankings data available.
+                                        No hay datos de clasificación.
                                     </td>
                                 </tr>
                             ) : (
@@ -61,18 +75,22 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
     );
 }
 
-function TabLink({ current, target, label }: { current: string; target: string; label: string }) {
+function TabLink({ current, target, label, returnTo }: { current: string; target: string; label: string; returnTo: string | null }) {
     const isActive = current === target;
+
+    const hrefBase = `/rankings?type=${target}`;
+    const href = returnTo ? withReturnTo(hrefBase, returnTo) : hrefBase;
+
     return (
-        <a
-            href={`/rankings?type=${target}`}
+        <Link
+            href={href}
             className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 isActive ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-900",
             )}
         >
             {label}
-        </a>
+        </Link>
     );
 }
 
@@ -92,7 +110,18 @@ function RankingRow({ entry, type }: { entry: RankingEntry; type: string }) {
                     entry.rank
                 )}
             </td>
-            <td className="px-4 py-3 font-medium text-slate-900">{entry.player.name}</td>
+            <td className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        {entry.player.avatarUrl ? (
+                            <img src={entry.player.avatarUrl} alt={entry.player.name} className="h-full w-full object-cover" />
+                        ) : (
+                            <User className="h-5 w-5 text-slate-400" />
+                        )}
+                    </div>
+                    <span className="font-medium text-slate-900">{entry.player.name}</span>
+                </div>
+            </td>
             <td className="px-4 py-3 text-right font-mono text-slate-700">{entry.score}</td>
             <td className="px-4 py-3 text-right text-slate-600">{winRate}%</td>
             <td className="px-4 py-3 text-right text-slate-600">{entry.stats.matchesPlayed}</td>

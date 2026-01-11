@@ -262,3 +262,59 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
         };
     }
 }
+
+export type RegisterThrowForPlayerInput = Omit<RegisterThrowInput, "participantId"> & {
+    playerId: string;
+};
+
+export async function registerThrowForPlayer(matchId: string, throwData: RegisterThrowForPlayerInput): Promise<ActionResponse<Throw>> {
+    try {
+        const participant = await prisma.matchParticipant.findFirst({
+            where: {
+                matchId,
+                playerId: throwData.playerId,
+            },
+        });
+
+        if (!participant) {
+            return {
+                success: false,
+                message: "Participant not found for this match",
+            };
+        }
+
+        // Calculate points if missing
+        const points = throwData.points ?? throwData.segment * throwData.multiplier;
+
+        const newThrow = await prisma.throw.create({
+            data: {
+                matchId,
+                participantId: participant.id,
+                roundIndex: throwData.roundIndex,
+                throwIndex: throwData.throwIndex,
+                segment: throwData.segment,
+                multiplier: throwData.multiplier,
+                x: throwData.x,
+                y: throwData.y,
+                points,
+                isBust: throwData.isBust ?? false,
+                isWin: throwData.isWin ?? false,
+                isValid: throwData.isValid ?? true,
+            },
+        });
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+            data: newThrow,
+        };
+    } catch (error) {
+        console.error("Error registering throw (by player):", error);
+        return {
+            success: false,
+            message: "Failed to register throw",
+        };
+    }
+}

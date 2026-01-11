@@ -1,0 +1,31 @@
+import type { Player } from "@prisma/client";
+
+export interface PlayerListProps {
+    initialPlayers: Player[];
+}
+
+export interface CreatePlayerDialogProps {
+    className?: string;
+}
+
+export interface EditPlayerDialogProps {
+    player: Player;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+export interface DeletePlayerDialogProps {
+    player: Player;
+    admins: Player[];
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+export interface PlayerRowActionsProps {
+    player: Player;
+    admins: Player[];
+}
+
+export interface AdminSidebarProps {
+    title?: string;
+}

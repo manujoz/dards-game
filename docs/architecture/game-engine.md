@@ -161,5 +161,3 @@ checkWinCondition(state) {
 ```
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

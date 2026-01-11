@@ -53,5 +53,3 @@ Sistema de mapping de coordenadas táctiles → segmentos del tablero:
 - [**Motor de Juego**](./game-engine.md) - Flujo de turnos, validación de reglas, inmutabilidad
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

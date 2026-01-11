@@ -1,5 +1,7 @@
 "use client";
 
+import type { HiddenTopBarProps } from "@/types/components/game";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Gamepad2, Maximize, Minimize, Play, RotateCcw, Settings, Target, X } from "lucide-react";
@@ -9,12 +11,14 @@ import { HiddenMenuTrigger } from "./HiddenMenuTrigger";
 import { CalibrationModal } from "./modals/CalibrationModal";
 import { NewGameModal } from "./modals/NewGameModal";
 
-export function HiddenTopBar() {
+const LAST_GAME_URL_STORAGE_KEY = "dards:lastGameUrl";
+
+export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig = false, onRestartSameConfig }: HiddenTopBarProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Modals
-    const [showNewGame, setShowNewGame] = useState(false);
+    const [showNewGame, setShowNewGame] = useState(defaultShowNewGame);
     const [showCalibration, setShowCalibration] = useState(false);
 
     const router = useRouter();
@@ -63,6 +67,17 @@ export function HiddenTopBar() {
         return () => document.removeEventListener("fullscreenchange", handler);
     }, []);
 
+    function handleOpenAdmin() {
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        try {
+            window.sessionStorage.setItem(LAST_GAME_URL_STORAGE_KEY, returnTo);
+        } catch {
+            // ignore storage failures
+        }
+
+        router.push(`/admin?returnTo=${encodeURIComponent(returnTo)}`);
+    }
+
     return (
         <>
             <HiddenMenuTrigger onTrigger={() => setIsVisible(true)} className={isVisible ? "hidden" : "block"} />
@@ -82,6 +97,13 @@ export function HiddenTopBar() {
                         New Game
                     </Button>
 
+                    {canRestartSameConfig && onRestartSameConfig && (
+                        <Button variant="outline" size="sm" onClick={onRestartSameConfig}>
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Restart
+                        </Button>
+                    )}
+
                     <Button variant="ghost" size="icon" title="Resume" onClick={() => setIsVisible(false)}>
                         <Play className="w-4 h-4" />
                     </Button>
@@ -100,7 +122,7 @@ export function HiddenTopBar() {
                         {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                     </Button>
 
-                    <Button variant="ghost" size="icon" title="Admin Panel" onClick={() => router.push("/admin")}>
+                    <Button variant="ghost" size="icon" title="Admin Panel" onClick={handleOpenAdmin}>
                         <Settings className="w-4 h-4" />
                     </Button>
 

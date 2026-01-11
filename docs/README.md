@@ -80,5 +80,3 @@ pnpm dev
 - **Rankings**: http://localhost:3000/rankings
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

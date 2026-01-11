@@ -58,5 +58,3 @@ GameController.tsx         # Orquestador principal
 - [**DartboardCanvas**](./dartboard.md) - Canvas HTML5, calibración táctil, detección de zonas
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

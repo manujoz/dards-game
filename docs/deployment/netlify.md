@@ -102,5 +102,3 @@ Si falla cualquier Server Action con error de DB, revisa primero `DATABASE_URL`/
     - Revisa que `DIRECT_URL` está configurada (direct, sin pooler).
 
 ---
-
-**Manu Overa - Investments** © 2025 - Registered team under license protection

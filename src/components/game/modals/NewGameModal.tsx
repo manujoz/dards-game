@@ -235,7 +235,6 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                     >
                                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                                             {player.avatarUrl ? (
-                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img src={player.avatarUrl} alt={player.nickname} className="w-full h-full object-cover" />
                                             ) : (
                                                 <Users className="w-4 h-4 text-muted-foreground" />

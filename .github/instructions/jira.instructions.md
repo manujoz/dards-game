@@ -4,21 +4,18 @@ description: "Concise guide for Jira MCP usage - all specs, minimal examples"
 
 # Jira MCP Usage Guide
 
-**ALWAYS** write tickets in **English**. Translate Spanish user input before inserting into Jira.
+Este repositorio no asume un proyecto Jira concreto. Si se usa Jira, adapta el proyecto/usuarios/labels a tu instancia.
 
 ## Project Setup - CRITICAL CONFIG - NEVER IGNORE THESE
 
-**ALLOWED PROJECTS**:
-- Investments
-  - Key: `INV`
+**PROJECT SETUP**:
+- Define manualmente `project_key` y usuarios permitidos según tu Jira.
 
 **ALLOWED LABELS**:
 - `APP`: When a task is related with one or more components 
 
-**ALLOWED USERS**:
-- Manu Overa
-  - AccountID: `633580a3140ba0bf651c1f68`
-  - Email: `manu.overa@gmail.com`
+**USERS**:
+- No se incluyen usuarios hardcodeados en este repositorio.
 
 **ALLOWED ISSUE TYPES**:
 - Task
