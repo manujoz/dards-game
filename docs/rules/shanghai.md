@@ -1,62 +1,115 @@
-# Reglas de Shanghai
+# Shanghai
 
 ## Visión General
 
-Los jugadores anotan tantos puntos como sea posible en el número activo de la ronda. También existe una condición de victoria instantánea llamada "Shanghai".
+Shanghai es un juego de precisión secuencial donde en cada ronda solo cuenta un número específico de la diana. Existe una condición de victoria instantánea especial llamada "Shanghai" que añade emoción al juego.
 
 ## Configuración
 
-- **Rondas**: 1-7 (por defecto) o 1-20.
-- **Números**: Ronda 1 = Número 1, Ronda 2 = Número 2, ... Ronda 7 = Número 7.
+### Duración de la Partida
 
-## Puntuación
+- **7 rondas**: Números del 1 al 7 (por defecto)
+- **20 rondas**: Números del 1 al 20 (partida completa)
 
-- **Objetivo Activo**: Solo los impactos en el número correspondiente al contador de ronda actual.
-    - Ej: Ronda 3: Solo impactos en "3" cuentan.
-    - Los fallos anotan 0.
-- **Puntos**: Valor \* Multiplicador. Se suma a la puntuación total.
+### Progresión
 
-## Condiciones de Victoria
+- **Ronda 1**: Solo cuenta el número 1
+- **Ronda 2**: Solo cuenta el número 2
+- **Ronda 3**: Solo cuenta el número 3
+- Y así sucesivamente...
 
-1.  **Puntuación Alta**: Después de todas las rondas, el jugador con la puntuación más alta gana.
-2.  **Shanghai (Victoria Instantánea)**: Si un jugador golpea un Simple, un Doble Y un Triple del número activo en el _mismo turno_. El juego termina inmediatamente y ese jugador gana independientemente de la puntuación.
+## Sistema de Puntuación
 
-## Casos Especiales
+### Número Activo
 
-- **Ventaja de Última Ronda**: Si Jugador 1 termina ronda 7 con 50 puntos, Jugador 2 aún puede ganar anotando > 50 puntos o golpeando un Shanghai.
-- **Secuencia de Shanghai**: El orden (S-D-T, T-S-D, etc.) no importa, solo necesitas uno de cada en el número activo específico.
+En cada ronda, **solo los impactos en el número correspondiente** suman puntos:
 
-## Escenarios Canónicos (Dorados)
+- Todos los demás números puntúan **0**
+- Los puntos se calculan: Valor del número × Multiplicador
+- Los puntos se acumulan en tu marcador total
 
-### Escenario 1: Puntuación Estándar
+**Ejemplo en Ronda 3:**
 
-_Config: 7 Rondas_
-**Estado**: Ronda 2 (Objetivo: 2). Puntuación: 10.
-**Turno**:
+- 3 Simple = 3 puntos
+- 3 Doble = 6 puntos
+- 3 Triple = 9 puntos
+- 19 Triple = 0 puntos (número incorrecto)
 
-1.  **Dardo 1**: 2 Triple. (+6)
-2.  **Dardo 2**: 2 Simple. (+2)
-3.  **Dardo 3**: 19 Simple. (Fallo/0 puntos - número incorrecto).
-    **Resultado**: La puntuación se convierte en **18**. Avanza a Ronda 3.
+## Cómo Ganar
 
-### Escenario 2: El Shanghai (Victoria Instantánea)
+Hay **dos formas de ganar** en Shanghai:
 
-_Config: 7 Rondas_.
-**Estado**: Ronda 5 (Objetivo: 5). El jugador va perdiendo 20-100.
-**Turno**:
+### 1. Victoria por Puntuación (Normal)
 
-1.  **Dardo 1**: 5 Simple.
-2.  **Dardo 2**: 5 Triple.
-3.  **Dardo 3**: 5 Doble.
-    **Resultado**: El jugador golpea Simple, Triple, Doble del número activo. **VICTORIA SHANGHAI**. Fin del Juego.
+Después de completar todas las rondas, el jugador con la **puntuación total más alta** gana.
 
-### Escenario 3: Shanghai Fallido
+### 2. Victoria Shanghai (Instantánea)
 
-_Config: 7 Rondas_.
-**Estado**: Ronda 4 (Objetivo: 4).
-**Turno**:
+Si en un **mismo turno** aciertas las tres zonas del número activo:
 
-1.  **Dardo 1**: 4 Simple.
-2.  **Dardo 2**: 4 Doble.
-3.  **Dardo 3**: 4 Simple. (Simple Duplicado).
-    **Resultado**: No es un Shanghai. Puntos: 4 + 8 + 4 = 16 puntos añadidos. El juego continúa.
+- Un **Simple**
+- Un **Doble**
+- Un **Triple**
+
+El juego termina inmediatamente y **ganas**, sin importar tu puntuación ni la ronda en la que estés.
+
+## Reglas Especiales
+
+### Condición Shanghai
+
+- El **orden** de los impactos no importa (Simple-Doble-Triple, Triple-Simple-Doble, etc.)
+- Los tres impactos deben ser del **número activo** de la ronda
+- Deben ocurrir en el **mismo turno** (3 dardos consecutivos)
+- La victoria es instantánea: no se completan las rondas restantes
+
+### Última Ronda
+
+Todos los jugadores completan sus turnos en la última ronda, por lo que:
+
+- Si vas perdiendo cuando te toca la ronda 7, aún puedes ganar
+- Puedes remontar con una puntuación alta o acertando un Shanghai
+
+## Ejemplos de Juego
+
+### Ejemplo 1: Puntuación estándar
+
+**Configuración**: 7 rondas  
+**Situación**: Ronda 2 (objetivo: número 2). Puntuación actual: 10
+
+**Turno:**
+
+1. **Primer dardo**: 2 Triple → +6 puntos
+2. **Segundo dardo**: 2 Simple → +2 puntos
+3. **Tercer dardo**: 19 Simple → 0 puntos (número incorrecto)
+
+**Resultado**: Tu puntuación es ahora **18**. Se avanza a la Ronda 3.
+
+---
+
+### Ejemplo 2: Victoria Shanghai
+
+**Configuración**: 7 rondas  
+**Situación**: Ronda 5 (objetivo: número 5). Vas perdiendo 20 a 100
+
+**Turno:**
+
+1. **Primer dardo**: 5 Simple → Conseguido ✓
+2. **Segundo dardo**: 5 Triple → Conseguido ✓
+3. **Tercer dardo**: 5 Doble → Conseguido ✓
+
+**Resultado**: Has completado el Shanghai. **¡Victoria instantánea!** El juego termina inmediatamente.
+
+---
+
+### Ejemplo 3: Shanghai fallido
+
+**Configuración**: 7 rondas  
+**Situación**: Ronda 4 (objetivo: número 4)
+
+**Turno:**
+
+1. **Primer dardo**: 4 Simple → Conseguido ✓
+2. **Segundo dardo**: 4 Doble → Conseguido ✓
+3. **Tercer dardo**: 4 Simple → Impacto duplicado (ya tenías simple)
+
+**Resultado**: No es Shanghai (necesitas Simple + Doble + Triple). Sumas 4 + 8 + 4 = **16 puntos**. El juego continúa normalmente.

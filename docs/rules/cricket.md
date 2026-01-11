@@ -1,37 +1,88 @@
-# Reglas de Cricket
+# Cricket
 
 ## Visión General
 
-Un juego de territorio y control. Los jugadores se enfocan en golpear números específicos (15, 16, 17, 18, 19, 20, Bull) para "cerrarlos" y anotar puntos.
+Cricket es un juego estratégico de territorio y control. Los jugadores compiten por "cerrar" números específicos de la diana y acumular puntos en ellos antes que sus oponentes.
 
 ## Configuración
 
-- **Números**: 15, 16, 17, 18, 19, 20, Bull (Por defecto).
-- **Modo**:
-    - **Estándar** (Por defecto): Los puntos son buenos. Anotas en números cerrados si los oponentes no los han cerrado.
-    - **Garganta Cortada**: Los puntos son malos. Los puntos anotados se suman a los oponentes que no han cerrado el número.
+### Números Activos
 
-## Puntuación
+Por defecto: **15, 16, 17, 18, 19, 20 y Bull**
 
-- **Objetivos**: Solo los impactos en 15, 16, 17, 18, 19, 20 y Bull cuentan. Los demás impactos son fallos.
-- **Marcas**:
-    - Simple: 1 marca
-    - Doble: 2 marcas
-    - Triple: 3 marcas (Bull Interior = 2 marcas, Bull Exterior = 1 marca)
-- **Cierre**: Un número está "Abierto" para un jugador una vez que acumula 3 marcas en él.
-- **Puntos (Estándar)**: Una vez que un jugador Abre un número, los impactos posteriores en ese número anotan puntos (Valor * Multiplicador) *solo si\* el número aún no está Cerrado por todos los oponentes usando la lógica de puntuación/penalización.
-    - Una vez que todos los jugadores han Cerrado un número, no se pueden anotar más puntos en él.
+### Modos de Juego
 
-## Condiciones de Victoria
+**Cricket Estándar** (por defecto)
 
-- **Estándar**: El jugador que ha Cerrado todos los números Y tiene la puntuación más alta (o igual) gana.
-    - Si un jugador cierra todos los números pero va por detrás en puntos, debe continuar anotando en números que aún están abiertos para los oponentes hasta ponerse al día.
+- Los puntos son buenos para ti
+- Anotas puntos en números que has cerrado si tus oponentes aún no los han cerrado
+- Objetivo: Cerrar todos los números y tener la puntuación más alta (o igual)
+
+**Cricket Garganta Cortada** (Cut-Throat)
+
+- Los puntos son malos para tus oponentes
+- Los puntos que consigues se suman a la puntuación de los oponentes que no han cerrado ese número
+- Objetivo: Cerrar todos los números y tener la puntuación más baja
+
+## Sistema de Puntuación
+
+### Números Válidos
+
+Solo cuentan los impactos en **15, 16, 17, 18, 19, 20 y Bull**. Cualquier otro número no suma marcas ni puntos.
+
+### Sistema de Marcas
+
+Cada número necesita **3 marcas** para cerrarse:
+
+- **Simple**: 1 marca
+- **Doble**: 2 marcas
+- **Triple**: 3 marcas
+- **Bull Exterior**: 1 marca
+- **Bull Interior**: 2 marcas
+
+### Estados de un Número
+
+1. **Cerrado para ti**: Has acumulado 3 marcas en ese número
+2. **Abierto para anotar**: Lo has cerrado pero tus oponentes no
+3. **Muerto**: Todos los jugadores lo han cerrado (no se pueden anotar más puntos)
+
+### Cómo Anotar Puntos
+
+**En modo Estándar:**
+
+- Una vez que cierres un número (3 marcas), cada impacto adicional te da puntos
+- Solo anotas si al menos un oponente **no** ha cerrado ese número
+- Puntos = Valor del segmento × Multiplicador
+- Cuando todos cierran un número, queda "muerto" y no da más puntos
+
+**En modo Garganta Cortada:**
+
+- Los puntos que consigues en números cerrados van a tus **oponentes** que no lo han cerrado
+- Es una estrategia de ataque para perjudicar a otros jugadores
+
+## Cómo Ganar
+
+**En modo Estándar:**
+Debes cumplir **dos condiciones** simultáneamente:
+
+1. Haber cerrado todos los números (15-20 y Bull)
+2. Tener la puntuación más alta o igual que tus oponentes
+
+Si cierras todos los números pero vas perdiendo en puntos, debes seguir jugando para anotar en los números que tus oponentes aún tengan abiertos.
 
 ## Casos Especiales
 
-- **Sobre-impacto**: Si se golpea un Triple en un número que ya tiene 2 marcas:
-    - 1 marca completa el cierre.
-    - Los 2 "impactos" restantes se utilizan para anotar (si es elegible).
+### Sobre-impacto
+
+Si aciertas un triple en un número que ya tiene 2 marcas:
+
+- 1 marca completa el cierre (llegas a 3)
+- Las 2 marcas restantes se convierten en puntos (si el número está abierto para anotar)
+
+**Ejemplo**: Tienes 2 marcas en el 20 y aciertas un Triple 20:
+
+- Primera marca: Cierra el 20 (3/3)
+- Marcas restantes: 2 × 20 = 40 puntos (si algún oponente no ha cerrado el 20)
 
 ## Escenarios Canónicos (Dorados)
 
@@ -80,11 +131,13 @@ _Config: Estándar_
 ### Escenario 5: Ponerse al Día en Puntos
 
 _Config: Estándar_
-**Estado**: - Jugador A: Todos cerrados. Puntuación 100. - Jugador B: Todos cerrados excepto 20 (Abierto para B). Puntuación 200.
+**Estado**:
+
+- Jugador A: Todos los números cerrados. Puntuación: 100
+- Jugador B: Todos cerrados excepto el 20 (B tiene menos de 3 marcas en el 20). Puntuación: 200
+
 **Turno (Jugador A)**:
 
 1.  **Dardo 1**: 20 Triple.
-    **Análisis**: A está cerrado. B NO está cerrado (B necesita cerrarlo, pero usualmente si A está hecho, ¿A gana? No, A necesita puntos). Espera, en cricket estándar, si A cierra todo pero va por detrás en puntos, A debe anotar en lo que sea que B tenga abierto. - Aclaración: Si A ha cerrado todo, pero B tiene puntuación más alta. A aún no puede ganar. A debe anotar en números que B NO ha cerrado. - En este estado, B tiene 20 ABIERTO (¿significando que B tiene >3 marcas? No, "Abierto para B" ¿significa que B tiene 3 marcas? Usualmente "Abierto" significa disponible para anotar. "Cerrado" significa 3 marcas alcanzadas. - Aclaremos terminología: - "Cerrado para Jugador": Jugador tiene 3 marcas. - "Cerrado para Tablero": Todos los jugadores tienen 3 marcas. - Corrección de estado: - Jugador A: Todos "Cerrados para Jugador". Puntuación 100. - Jugador B: Todos "Cerrados para Jugador" EXCEPTO 20 (B tiene < 3 marcas). Puntuación 200. - Estado del tablero: 20 NO está "Cerrado para Tablero". A puede anotar en él.
-    **Turno (Jugador A)**:
-1.  **Dardo 1**: 20 Triple.
-    **Resultado**: A anota 60 puntos. Total 160. Aún va por detrás de 200. El juego continúa.
+    **Análisis**: A tiene el 20 cerrado. B NO ha cerrado el 20 (tiene < 3 marcas). Por tanto, A puede anotar en el 20.
+    **Resultado**: A anota 60 puntos. Puntuación total de A: 160. A aún va por detrás de B (200), por lo que el juego continúa.

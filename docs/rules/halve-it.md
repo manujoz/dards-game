@@ -1,68 +1,114 @@
-# Reglas de Halve-It
+# Halve It
 
 ## Visión General
 
-Un juego de alto riesgo donde los jugadores intentan golpear objetivos específicos en cada ronda. No conseguir golpear el objetivo al menos una vez resulta en que la puntuación total del jugador se reduzca a la mitad.
+Halve It es un juego de alto riesgo donde la presión es constante. En cada ronda debes acertar un objetivo específico al menos una vez, o tu puntuación total se **divide por la mitad**. Un fallo puede costarte caro.
 
 ## Configuración
 
-- **Secuencia de Objetivos**: Estándar (Por defecto).
-    - Ejemplo de Secuencia: 20, 16, Doble 7, 14, 18, Triple 10, Bull. (Solo un ejemplo, v1 tendrá una lista fija o seleccionable).
-    - Por defecto v1: 20, 19, 18, 17, 16, 15, Bull. (¿Simplificado como Cricket pero reglas Halve-it? ¿O mezcla Halve-it clásica?).
-    - Definamos el Por defecto v1 basado en clásico: **20, 16, doble 7, 14, 18, triple 10, bull**.
+### Secuencia de Objetivos Estándar
 
-## Puntuación
+Por defecto, las rondas siguen esta secuencia clásica:
 
-- **Puntuación Inicial**: 0 (o a veces una base como 40 para evitar 0s tempranos, v1 comienza en 0).
-- **Mecánica de turno**:
-    - El jugador lanza 3 dardos al Objetivo de la ronda actual.
-    - **Éxito**: Si _al menos un_ dardo golpea el Objetivo (coincidiendo con segmento y restricción como Doble/Triple):
-        - Los puntos de _todos los impactos válidos_ se suman a la puntuación total.
-        - (Puntos = Valor \* Multiplicador).
-    - **Fallo**: Si _ninguno_ de los 3 dardos golpea el Objetivo:
-        - La Puntuación Total actual es **Dividida a la mitad**.
-        - División entera (Piso). Ejemplo: 35 / 2 = 17.
+1. **Ronda 1**: 20
+2. **Ronda 2**: 16
+3. **Ronda 3**: Doble 7
+4. **Ronda 4**: 14
+5. **Ronda 5**: 18
+6. **Ronda 6**: Triple 10
+7. **Ronda 7**: Bull
 
-## Condiciones de Victoria
+**Nota**: Los objetivos con restricción (Doble 7, Triple 10) requieren acertar específicamente esa zona, no sirve el simple o cualquier otra.
 
-- Puntuación más alta después de completar la secuencia completa de objetivos.
+## Sistema de Puntuación
 
-## Casos Especiales
+### Puntuación Inicial
 
-- **Puntuación Cero**: Dividir 0 a la mitad resulta en 0.
-- **Objetivo Incorrecto**: Golpear 19 cuando el objetivo es 20 cuenta como 0 puntos y no cuenta como un "Éxito".
+Todos los jugadores comienzan con **0 puntos**.
 
-## Escenarios Canónicos (Dorados)
+### Mecánica de Turno
 
-### Escenario 1: Éxito
+Cada turno lanzas **3 dardos** intentando acertar el objetivo de la ronda:
 
-_Config: Estándar. Objetivo: 20._
-**Estado**: Puntuación: 100.
-**Turno**:
+**Si aciertas el objetivo al menos una vez:**
 
-1.  **Dardo 1**: 20 Simple. (Impacto. Puntos acumulados: 20).
-2.  **Dardo 2**: 18 Simple. (Objetivo no alcanzado).
-3.  **Dardo 3**: 20 Triple. (Impacto. Puntos acumulados: 60).
-    **Resultado**: Objetivo golpeado al menos una vez. Puntuación = 100 + 20 + 60 = **180**.
+- Los puntos de **todos los impactos válidos** se suman a tu puntuación total
+- Puntos = Valor del segmento × Multiplicador
+- Los impactos en otros números no suman puntos
 
-### Escenario 2: Fallo (Dividir a la mitad)
+**Si fallas los 3 dardos (ninguno acierta el objetivo):**
 
-_Config: Estándar. Objetivo: Doble 7._
-**Estado**: Puntuación: 50.
-**Turno**:
+- Tu puntuación total actual se **divide por la mitad** (división entera)
+- Ejemplo: 35 ÷ 2 = 17
 
-1.  **Dardo 1**: 7 Simple. (Restricción no cumplida - necesita Doble).
-2.  **Dardo 2**: 19 Doble. (Objetivo no alcanzado).
-3.  **Dardo 3**: 7 Simple. (Restricción no cumplida).
-    **Resultado**: Objetivo no alcanzado completamente. Puntuación = piso(50 / 2) = **25**.
+## Cómo Ganar
 
-### Escenario 3: Manejo de Cero
+El jugador con la **puntuación más alta** después de completar todas las rondas de la secuencia gana la partida.
 
-_Config: Estándar. Objetivo: Bull._
-**Estado**: Puntuación: 0.
-**Turno**:
+## Reglas Especiales
 
-1.  **Dardo 1**: 20. (Fallo).
-2.  **Dardo 2**: 20. (Fallo).
-3.  **Dardo 3**: 20. (Fallo).
-    **Resultado**: Puntuación = piso(0 / 2) = **0**.
+### Objetivos con Restricción
+
+Cuando el objetivo es un **Doble** o **Triple** específico:
+
+- Solo cuenta si aciertas exactamente esa zona
+- Ejemplo: Si el objetivo es "Doble 7", acertar "7 Simple" o "7 Triple" **no cuenta**
+
+### Puntuación Cero
+
+Si tienes 0 puntos y fallas el objetivo:
+
+- 0 ÷ 2 = 0 (sigues con 0 puntos)
+- Es un buen momento para empezar a acumular puntos sin riesgo
+
+### Números No Objetivo
+
+Golpear números que no son el objetivo de la ronda no suma puntos, aunque aciertes dobles o triples.
+
+## Ejemplos de Juego
+
+### Ejemplo 1: Éxito en objetivo simple
+
+**Configuración**: Secuencia estándar  
+**Ronda**: Ronda 1 (objetivo: 20)  
+**Situación**: Puntuación actual: 100
+
+**Turno:**
+
+1. **Primer dardo**: 20 Simple → Impacto válido (20 puntos)
+2. **Segundo dardo**: 18 Simple → No es el objetivo (0 puntos)
+3. **Tercer dardo**: 20 Triple → Impacto válido (60 puntos)
+
+**Resultado**: Has acertado el objetivo. Sumas 20 + 60 = **80 puntos**. Puntuación total: **180**.
+
+---
+
+### Ejemplo 2: Fallo (dividir a la mitad)
+
+**Configuración**: Secuencia estándar  
+**Ronda**: Ronda 3 (objetivo: Doble 7)  
+**Situación**: Puntuación actual: 50
+
+**Turno:**
+
+1. **Primer dardo**: 7 Simple → No cumple (necesitas Doble 7)
+2. **Segundo dardo**: 19 Doble → No es el objetivo
+3. **Tercer dardo**: 7 Simple → No cumple (necesitas Doble 7)
+
+**Resultado**: No has acertado el objetivo. Tu puntuación se divide: 50 ÷ 2 = **25**.
+
+---
+
+### Ejemplo 3: División desde cero
+
+**Configuración**: Secuencia estándar  
+**Ronda**: Ronda 7 (objetivo: Bull)  
+**Situación**: Puntuación actual: 0
+
+**Turno:**
+
+1. **Primer dardo**: 20 Simple → No es el objetivo
+2. **Segundo dardo**: 20 Simple → No es el objetivo
+3. **Tercer dardo**: 20 Simple → No es el objetivo
+
+**Resultado**: No has acertado el objetivo. Tu puntuación: 0 ÷ 2 = **0** (sigues con 0 puntos).

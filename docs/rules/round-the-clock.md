@@ -1,78 +1,133 @@
-# Reglas de Round the Clock
+# Round the Clock (Alrededor del Reloj)
 
 ## Visión General
 
-Los jugadores deben golpear los números 1 al 20 (y opcionalmente Bull) en orden secuencial.
+Round the Clock es un juego de secuencia y precisión. Debes acertar los números de la diana en orden consecutivo, desde el 1 hasta el 20 (y opcionalmente el Bull). Es una excelente forma de practicar la precisión en toda la diana.
 
 ## Configuración
 
-- **Número de Inicio**: 1.
-- **Número Final**: 20 (por defecto), Bull.
-- **Modo**:
-    - **Simples**: Cualquier segmento cuenta (Simple, Doble, Triple).
-    - **Dobles**: Debe golpear el anillo Doble.
-    - **Triples**: Debe golpear el anillo Triple.
+### Secuencia
 
-## Puntuación
+- **Inicio**: Número 1
+- **Progresión**: 1 → 2 → 3 → ... → 20
+- **Final**:
+    - **20** (por defecto)
+    - **Bull** (opcional, para partidas más largas)
 
-- **Objetivo Activo**: Cada jugador rastrea su número objetivo actual (comienza en 1).
-- **Impacto**:
-    - Si el dardo golpea el Objetivo Activo (respetando las restricciones de Modo):
-        - El marcador avanza al siguiente número.
-        - El jugador puede avanzar múltiples pasos en un turno.
-    - Si el dardo no golpea el Objetivo Activo:
-        - Sin progreso.
+### Modos de Dificultad
 
-## Condiciones de Victoria
+**Modo Simples** (por defecto)
 
-- El primer jugador en golpear exitosamente el **Número Final** gana.
+- Cualquier impacto en el número cuenta (Simple, Doble o Triple)
+- El más accesible para principiantes
 
-## Casos Especiales
+**Modo Dobles**
 
-- **Saltar**: Golpear "3" cuando se apunta a "2" cuenta como un fallo. Sin progreso.
-- **Doble/Triple en Modo Simples**: Cuenta como un impacto válido. Avanza el objetivo.
+- Solo cuenta si aciertas el **anillo doble** del número
+- Mayor dificultad y precisión requerida
 
-## Escenarios Canónicos (Dorados)
+**Modo Triples**
 
-### Escenario 1: Múltiples Avances
+- Solo cuenta si aciertas el **anillo triple** del número
+- Máxima dificultad
 
-_Config: Simples, Final: 20_
-**Estado**: Objetivo: 5
-**Turno**:
+## Mecánica del Juego
 
-1.  **Dardo 1**: 5 Simple. (¡Impacto! Objetivo avanza a 6).
-2.  **Dardo 2**: 6 Triple. (¡Impacto! Objetivo avanza a 7).
-3.  **Dardo 3**: 7 Doble. (¡Impacto! Objetivo avanza a 8).
-    **Resultado**: El objetivo del siguiente turno es **8**.
+### Objetivo Activo
 
-### Escenario 2: Objetivo No Alcanzado
+Cada jugador tiene su propio **número objetivo** actual:
 
-_Config: Simples, Final: 20_
-**Estado**: Objetivo: 10
-**Turno**:
+- Todos comienzan con el número **1**
+- El objetivo solo avanza cuando aciertas el número correcto
 
-1.  **Dardo 1**: 12 Simple. (Fallo).
-2.  **Dardo 2**: 10 Simple. (¡Impacto! Objetivo avanza a 11).
-3.  **Dardo 3**: 12 Simple. (Fallo).
-    **Resultado**: El objetivo del siguiente turno es **11**.
+### Progresión
 
-### Escenario 3: Turno Ganador
+Cuando aciertas tu número objetivo:
 
-_Config: Simples, Final: 20_
-**Estado**: Objetivo: 19
-**Turno**:
+- Tu objetivo avanza automáticamente al siguiente número
+- Puedes avanzar **múltiples números en un solo turno** si aciertas consecutivamente
 
-1.  **Dardo 1**: 19 Simple. (¡Impacto! Objetivo avanza a 20).
-2.  **Dardo 2**: 20 Simple. (¡Impacto! Objetivo avanza a Final).
-    **Resultado**: **VICTORIA**. Fin del Juego.
+### Impactos No Válidos
 
-### Escenario 4: Rigor del Modo Dobles
+- Si aciertas un número diferente a tu objetivo: **sin efecto**
+- No puedes "saltarte" números: debes seguir el orden estricto
 
-_Config: Dobles, Final: 20_
-**Estado**: Objetivo: 5
-**Turno**:
+## Cómo Ganar
 
-1.  **Dardo 1**: 5 Simple. (Fallo - necesita Doble).
-2.  **Dardo 2**: 5 Triple. (Fallo - necesita Doble).
-3.  **Dardo 3**: 5 Doble. (¡Impacto! Objetivo avanza a 6).
-    **Resultado**: El objetivo del siguiente turno es **6**.
+El **primer jugador** que acierte su número final (20 o Bull, según configuración) **gana inmediatamente**.
+
+## Reglas Especiales
+
+### En Modo Simples
+
+- Los impactos en Dobles y Triples de tu número objetivo también cuentan
+- Es el modo más flexible y rápido
+
+### En Modo Dobles o Triples
+
+- Solo el anillo específico cuenta como válido
+- Acertar el número en otra zona (Simple, Doble o Triple diferente) no avanza tu objetivo
+
+### No Puedes Saltar Números
+
+- Si tu objetivo es el 5 y aciertas el 7: **sin efecto**
+- Debes acertar los números en orden estricto: 1, 2, 3, 4, 5...
+
+## Ejemplos de Juego
+
+### Ejemplo 1: Múltiples avances en un turno
+
+**Configuración**: Modo Simples, final en 20  
+**Situación**: Tu objetivo actual es el 5
+
+**Turno:**
+
+1. **Primer dardo**: 5 Simple → **¡Acertado!** Objetivo avanza a 6
+2. **Segundo dardo**: 6 Triple → **¡Acertado!** Objetivo avanza a 7
+3. **Tercer dardo**: 7 Doble → **¡Acertado!** Objetivo avanza a 8
+
+**Resultado**: Has avanzado 3 números en un solo turno. Tu próximo objetivo es el **8**.
+
+---
+
+### Ejemplo 2: Turno con fallos
+
+**Configuración**: Modo Simples, final en 20  
+**Situación**: Tu objetivo actual es el 10
+
+**Turno:**
+
+1. **Primer dardo**: 12 Simple → Fallo (no es tu objetivo)
+2. **Segundo dardo**: 10 Simple → **¡Acertado!** Objetivo avanza a 11
+3. **Tercer dardo**: 12 Simple → Fallo (tu objetivo ahora es 11)
+
+**Resultado**: Tu próximo objetivo es el **11**.
+
+---
+
+### Ejemplo 3: Victoria
+
+**Configuración**: Modo Simples, final en 20  
+**Situación**: Tu objetivo actual es el 19
+
+**Turno:**
+
+1. **Primer dardo**: 19 Simple → **¡Acertado!** Objetivo avanza a 20
+2. **Segundo dardo**: 20 Simple → **¡Acertado!** Has completado la secuencia
+
+**Resultado**: **¡Victoria!** Has sido el primero en completar la secuencia.
+
+---
+
+### Ejemplo 4: Modo Dobles (alta dificultad)
+
+**Configuración**: Modo Dobles, final en 20  
+**Situación**: Tu objetivo actual es el 5
+
+**Turno:**
+
+1. **Primer dardo**: 5 Simple → Fallo (necesitas el Doble 5)
+2. **Segundo dardo**: 5 Triple → Fallo (necesitas el Doble 5)
+3. **Tercer dardo**: 5 Doble → **¡Acertado!** Objetivo avanza a 6
+
+**Resultado**: Tu próximo objetivo es el **6** (necesitarás acertar el Doble 6).

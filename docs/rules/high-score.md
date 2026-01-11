@@ -1,49 +1,84 @@
-# Reglas de Puntuación Alta
+# High Score (Puntuación Alta)
 
 ## Visión General
 
-Acumulación simple de puntos. Los jugadores intentan obtener la puntuación total más alta en un número fijo de rondas (o hasta que se alcanza una puntuación objetivo, aunque las rondas fijas es lo por defecto).
+High Score es el juego más simple y directo de dardos. El objetivo es conseguir la mayor puntuación posible en un número fijo de rondas. Todos los números de la diana suman puntos.
 
 ## Configuración
 
-- **Rondas**: Número fijo de rondas (por defecto 7).
-- **Puntuación Objetivo**: Límite opcional (ej: 1000). (Probablemente no en el por defecto v1 MVP, manteniéndose en Rondas).
+### Número de Rondas
 
-## Puntuación
+- **7 rondas**: Duración estándar (por defecto)
+- Cada jugador tiene 3 dardos por ronda
 
-- **Entrada**: Cualquier segmento.
-- **Valor**: Segmento \* Multiplicador.
-- **Acumulación**: La puntuación comienza en 0 y aumenta.
+## Sistema de Puntuación
 
-## Condiciones de Victoria
+### Cálculo de Puntos
 
-- **Fin de Rondas**: Después de que se completen las rondas definidas, el jugador con la puntuación más alta gana.
-- **Empate**: Si las puntuaciones están empatadas, usualmente se juega un dardo de desempate (más cerca del bull) o una ronda extra. Para v1: Empate o Ronda Extra (1 ronda). _Decisión: Empate._
+Todos los impactos en la diana suman a tu puntuación total:
 
-## Casos Especiales
+- **Puntos** = Valor del segmento × Multiplicador
+- **Puntuación inicial**: 0
+- Los puntos se van **acumulando** ronda tras ronda
 
-- **Dardos rechazados**: 0 puntos.
+### Ejemplos de Puntuación
 
-## Escenarios Canónicos (Dorados)
+- 20 Simple = 20 puntos
+- 20 Doble = 40 puntos
+- 20 Triple = 60 puntos
+- Bull Exterior = 25 puntos
+- Bull Interior = 50 puntos
 
-### Escenario 1: Puntuación Estándar
+### Dardos Inválidos
 
-_Config: 7 Rondas_
-**Estado**: Puntuación: 100. Ronda 3.
-**Turno**:
+Los dardos que no impactan en la diana o rebotan puntúan **0**.
 
-1.  **Dardo 1**: 20 Triple. (+60)
-2.  **Dardo 2**: 20 Simple. (+20)
-3.  **Dardo 3**: 1 Simple. (+1)
-    **Resultado**: La puntuación se convierte en **181**.
+## Cómo Ganar
 
-### Escenario 2: Fin del Juego
+Después de completar las **7 rondas**, el jugador con la **puntuación total más alta** gana.
 
-_Config: 7 Rondas. 2 Jugadores._
-**Estado**: - J1: 300 (Completó 7 rondas). - J2: 250 (Inicio de Ronda 7).
-**Turno (J2)**:
+### En Caso de Empate
 
-1.  **Dardo 1**: 20 Triple. (310).
-2.  **Dardo 2**: 20 Simple. (330).
-3.  **Dardo 3**: 10 Doble. (350).
-    **Resultado**: J2 termina con 350. J1 tiene 300. **J2 GANA**.
+Si dos o más jugadores terminan con la misma puntuación, se declara **empate**.
+
+## Estrategia Básica
+
+Para maximizar tu puntuación:
+
+- Apunta a los **triples altos** (T20, T19, T18)
+- El **Triple 20** (60 puntos) es el objetivo más valioso
+- El **Bull Interior** (50 puntos) también es una buena opción
+- Evita los números bajos si buscas puntuaciones altas
+
+## Ejemplos de Juego
+
+### Ejemplo 1: Turno estándar
+
+**Configuración**: 7 rondas  
+**Situación**: Ronda 3, puntuación actual: 100
+
+**Turno:**
+
+1. **Primer dardo**: 20 Triple → +60 puntos
+2. **Segundo dardo**: 20 Simple → +20 puntos
+3. **Tercer dardo**: 1 Simple → +1 punto
+
+**Resultado**: Sumas 81 puntos. Puntuación total: **181**.
+
+---
+
+### Ejemplo 2: Final de partida
+
+**Configuración**: 7 rondas, 2 jugadores  
+**Situación**:
+
+- Jugador 1: 300 puntos (ha completado sus 7 rondas)
+- Jugador 2: 250 puntos (comienza la ronda 7)
+
+**Turno del Jugador 2:**
+
+1. **Primer dardo**: 20 Triple → 250 + 60 = 310
+2. **Segundo dardo**: 20 Simple → 310 + 20 = 330
+3. **Tercer dardo**: 10 Doble → 330 + 20 = 350
+
+**Resultado**: Jugador 2 termina con 350 puntos. Jugador 1 tiene 300. **¡Gana el Jugador 2!**
