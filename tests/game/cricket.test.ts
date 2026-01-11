@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// tests/game/cricket.test.ts
 import { CricketGame } from "@/lib/game/games/cricket";
-import type { CricketPlayerStats } from "@/types/models/darts";
-import { CricketConfig } from "@/types/models/darts";
+import type { CricketConfig, CricketPlayerStats } from "@/types/models/darts";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestState, mockPlayer } from "./test-utils";
 
@@ -23,7 +20,7 @@ describe("CricketGame Logic", () => {
         it("should initialize stats for tracked numbers", () => {
             const players = [mockPlayer("p1")];
             const partialState = game.init(defaultConfig, players);
-            const stats = partialState.playerStates?.[0].stats as any;
+            const stats = partialState.playerStates?.[0].stats as unknown as CricketPlayerStats;
 
             expect(stats.score).toBe(0);
             expect(stats.marks).toEqual({});
@@ -75,7 +72,7 @@ describe("CricketGame Logic", () => {
 
             let result = game.processThrow(state, { segment: 20, multiplier: 3 });
             const psA = state.playerStates[0];
-            const statsA = psA.stats as any;
+            const statsA = psA.stats as unknown as CricketPlayerStats;
 
             expect(statsA.marks[20]).toBe(3);
             expect(statsA.closedNumbers).toContain(20);
@@ -106,11 +103,14 @@ describe("CricketGame Logic", () => {
             // Setup: A Open on 20, B Closed on 20
             const psA = state.playerStates[0];
             const psB = state.playerStates[1];
-            (psA.stats as any).marks[20] = 3;
-            (psA.stats as any).closedNumbers.push(20);
+            const statsA = psA.stats as unknown as CricketPlayerStats;
+            const statsB = psB.stats as unknown as CricketPlayerStats;
 
-            (psB.stats as any).marks[20] = 3;
-            (psB.stats as any).closedNumbers.push(20);
+            statsA.marks[20] = 3;
+            statsA.closedNumbers.push(20);
+
+            statsB.marks[20] = 3;
+            statsB.closedNumbers.push(20);
 
             // A throws T20
             // Both closed. Number is dead. 0 Points.
@@ -131,8 +131,9 @@ describe("CricketGame Logic", () => {
             // A has 20 Open. B has 0 marks.
             const psA = state.playerStates[0];
             const psB = state.playerStates[1];
-            (psA.stats as any).marks[20] = 3;
-            (psA.stats as any).closedNumbers.push(20); // A Closed
+            const statsA = psA.stats as unknown as CricketPlayerStats;
+            statsA.marks[20] = 3;
+            statsA.closedNumbers.push(20); // A Closed
 
             // A throws Single 20
             // Points (20) go to B (since B not closed)
@@ -154,7 +155,7 @@ describe("CricketGame Logic", () => {
             Object.assign(state, game.init(defaultConfig, players));
 
             const psA = state.playerStates[0];
-            const statsA = psA.stats as any;
+            const statsA = psA.stats as unknown as CricketPlayerStats;
             psA.score = 200;
             // Close everything except Bull (25)
             [20, 19, 18, 17, 16, 15].forEach((n) => {
@@ -164,11 +165,12 @@ describe("CricketGame Logic", () => {
 
             const psB = state.playerStates[1];
             psB.score = 180;
+            const statsB = psB.stats as unknown as CricketPlayerStats;
             // B fully closed?
             // Docs: "Player B: All numbers closed."
             [20, 19, 18, 17, 16, 15, 25].forEach((n) => {
-                (psB.stats as any).marks[n] = 3;
-                (psB.stats as any).closedNumbers.push(n);
+                statsB.marks[n] = 3;
+                statsB.closedNumbers.push(n);
             });
 
             // A throws Bull Single

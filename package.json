@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --webpack --port 3050",
-        "dev:turbopack": "next dev --turbopack --port 3050",
+        "dev": "next dev --webpack --port 3010",
+        "dev:turbopack": "next dev --turbopack --port 3010",
         "build": "next build",
         "build:netlify": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm build",
         "start": "next start",
@@ -15,10 +15,6 @@
         "prisma:migrate:dev": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma migrate dev'",
         "prisma:seed": "sh -c 'set -a; [ -f ./.env.local ] && . ./.env.local; set +a; prisma db seed'",
         "postinstall": "prisma generate",
-        "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
-        "docker:build": "docker-compose -f docker-compose.dev.yml build",
-        "docker:down": "docker-compose -f docker-compose.dev.yml down",
-        "docker:reset": "docker-compose -f docker-compose.dev.yml down -v && docker-compose -f docker-compose.dev.yml up --build",
         "test": "vitest run"
     },
     "dependencies": {

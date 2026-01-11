@@ -1,49 +1,49 @@
-# High Score Rules
+# Reglas de Puntuación Alta
 
-## Overview
+## Visión General
 
-Simple score accumulation. Players try to get the highest total score over a fixed number of rounds (or until a target score is reached, though fixed rounds is default).
+Acumulación simple de puntos. Los jugadores intentan obtener la puntuación total más alta en un número fijo de rondas (o hasta que se alcanza una puntuación objetivo, aunque las rondas fijas es lo por defecto).
 
-## Configuration
+## Configuración
 
--   **Rounds**: Fixed number of rounds (default 7).
--   **Target Score**: Optional cap (e.g., 1000). (Likely not in v1 MVP default, sticking to Rounds).
+- **Rondas**: Número fijo de rondas (por defecto 7).
+- **Puntuación Objetivo**: Límite opcional (ej: 1000). (Probablemente no en el por defecto v1 MVP, manteniéndose en Rondas).
 
-## Scoring
+## Puntuación
 
--   **Input**: Any segment.
--   **Value**: Segment \* Multiplier.
--   **Accumulation**: Score starts at 0 and increases.
+- **Entrada**: Cualquier segmento.
+- **Valor**: Segmento \* Multiplicador.
+- **Acumulación**: La puntuación comienza en 0 y aumenta.
 
-## Win Conditions
+## Condiciones de Victoria
 
--   **End of Rounds**: After the defined number of rounds are completed, the player with the highest score wins.
--   **Tie**: If scores are tied, usually a tie-break throw (closest to bull) or extra round is played. For v1: Draw or Extra Round (1 round). _Decision: Draw._
+- **Fin de Rondas**: Después de que se completen las rondas definidas, el jugador con la puntuación más alta gana.
+- **Empate**: Si las puntuaciones están empatadas, usualmente se juega un dardo de desempate (más cerca del bull) o una ronda extra. Para v1: Empate o Ronda Extra (1 ronda). _Decisión: Empate._
 
-## Edge Cases
+## Casos Especiales
 
--   **Bounce outs**: 0 points.
+- **Dardos rechazados**: 0 puntos.
 
-## Canonical Scenarios (Golden)
+## Escenarios Canónicos (Dorados)
 
-### Scenario 1: Standard Scoring
+### Escenario 1: Puntuación Estándar
 
-_Config: 7 Rounds_
-**State**: Score: 100. Round 3.
-**Turn**:
+_Config: 7 Rondas_
+**Estado**: Puntuación: 100. Ronda 3.
+**Turno**:
 
-1.  **Throw 1**: 20 Triple. (+60)
-2.  **Throw 2**: 20 Single. (+20)
-3.  **Throw 3**: 1 Single. (+1)
-    **Result**: Score becomes **181**.
+1.  **Dardo 1**: 20 Triple. (+60)
+2.  **Dardo 2**: 20 Simple. (+20)
+3.  **Dardo 3**: 1 Simple. (+1)
+    **Resultado**: La puntuación se convierte en **181**.
 
-### Scenario 2: End Game
+### Escenario 2: Fin del Juego
 
-_Config: 7 Rounds. 2 Players._
-**State**: - P1: 300 (Finished 7 rounds). - P2: 250 (Start of Round 7).
-**Turn (P2)**:
+_Config: 7 Rondas. 2 Jugadores._
+**Estado**: - J1: 300 (Completó 7 rondas). - J2: 250 (Inicio de Ronda 7).
+**Turno (J2)**:
 
-1.  **Throw 1**: 20 Triple. (310).
-2.  **Throw 2**: 20 Single. (330).
-3.  **Throw 3**: 10 Double. (350).
-    **Result**: P2 finishes with 350. P1 has 300. **P2 WINS**.
+1.  **Dardo 1**: 20 Triple. (310).
+2.  **Dardo 2**: 20 Simple. (330).
+3.  **Dardo 3**: 10 Doble. (350).
+    **Resultado**: J2 termina con 350. J1 tiene 300. **J2 GANA**.

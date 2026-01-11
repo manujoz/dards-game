@@ -12,11 +12,11 @@
 
 ## Visión General
 
-Dards Game utiliza **Docker** para desarrollo y producción, garantizando consistencia entre entornos.
+Dards Game se despliega en **Netlify** usando **Supabase (Postgres)** como base de datos persistente.
 
 ## Entornos
 
-### Desarrollo Local (Sin Docker)
+### Desarrollo Local
 
 ```bash
 # Instalar dependencias
@@ -34,21 +34,6 @@ pnpm dev
 
 **Acceso**: http://localhost:3000
 
-### Desarrollo con Docker
-
-```bash
-# Levantar contenedores (App + SQLite volumen)
-pnpm docker:dev
-
-# Rebuild tras cambios en dependencias
-pnpm docker:build
-
-# Detener contenedores
-pnpm docker:down
-```
-
-**Acceso**: http://localhost:3003
-
 ### Producción
 
 ```bash
@@ -61,7 +46,6 @@ pnpm start
 
 ## Documentación de Despliegue
 
-- [**Docker**](./docker.md) - Configuración de contenedores, volúmenes, troubleshooting
 - [**Netlify + Supabase (Postgres)**](./netlify.md) - Deploy en Netlify, variables de entorno y migraciones Prisma
 
 ---

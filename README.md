@@ -14,17 +14,14 @@ pnpm dlx prisma db seed
 
 # Desarrollo local
 pnpm dev
-
-# O con Docker
-pnpm docker:dev
 ```
 
 **Accesos**:
 
-- **Juego**: http://localhost:3000/game
-- **Admin Jugadores**: http://localhost:3000/players
-- **Admin Partidas**: http://localhost:3000/matches
-- **Rankings**: http://localhost:3000/rankings
+- **Juego**: http://localhost:3010/game
+- **Admin Jugadores**: http://localhost:3010/players
+- **Admin Partidas**: http://localhost:3010/matches
+- **Rankings**: http://localhost:3010/rankings
 
 ## 📚 Documentación
 
@@ -34,7 +31,7 @@ La documentación completa está disponible en **español** en [docs/README.md](
 - [**📐 Arquitectura**](./docs/architecture/README.md) - Motor de juego, flujo de datos
 - [**🔌 API**](./docs/api/README.md) - Server Actions, validación
 - [**🎨 Componentes**](./docs/components/README.md) - DartboardCanvas, calibración
-- [**🚀 Despliegue**](./docs/deployment/README.md) - Docker, comandos útiles
+- [**🚀 Despliegue**](./docs/deployment/README.md) - Netlify + Supabase, variables de entorno
 - [**📖 Reglas de Juego**](./docs/rules/README.md) - Especificaciones de los 7 modos
 
 ## 🎮 Modos de Juego (v1)
@@ -53,10 +50,10 @@ La documentación completa está disponible en **español** en [docs/README.md](
 
 - **Framework**: Next.js 16 (App Router) + React 19
 - **UI**: Shadcn/ui + Tailwind CSS
-- **Base de Datos**: Prisma + SQLite
+- **Base de Datos**: Prisma + Supabase (Postgres)
 - **Validación**: Zod
 - **Testing**: Vitest
-- **Deploy**: Docker + Docker Compose
+- **Deploy**: Netlify (plugin Next.js)
 - **Audio**: Web Audio API
 
 ## 📂 Estructura del Proyecto
@@ -104,22 +101,6 @@ Tests disponibles:
 - `cricket.test.ts` - Marcas y cierre de números
 - `calibration.test.ts` - Transformaciones affine
 
-## 🐳 Docker
-
-```bash
-# Desarrollo con hot-reload
-pnpm docker:dev         # http://localhost:3003
-
-# Rebuild tras cambios en package.json
-pnpm docker:build
-
-# Detener contenedores
-pnpm docker:down
-
-# Reset completo (⚠️ Elimina base de datos)
-pnpm docker:reset
-```
-
 ## 📋 Scripts Disponibles
 
 ```bash
@@ -129,9 +110,6 @@ pnpm start            # Servidor de producción
 pnpm lint             # ESLint
 pnpm lint:fix         # ESLint con auto-fix
 pnpm test             # Vitest
-pnpm docker:dev       # Docker Compose desarrollo
-pnpm docker:build     # Rebuild de contenedores
-pnpm docker:down      # Detener Docker
 ```
 
 ## 🎯 Características Clave
@@ -163,7 +141,8 @@ pnpm docker:down      # Detener Docker
 
 ```env
 # .env.local
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@POOLER_HOST:6543/postgres?pgbouncer=true&sslmode=require&connection_limit=1&pool_timeout=0"
+DIRECT_URL="postgresql://USER:PASSWORD@DB_HOST:5432/postgres?sslmode=require"
 NODE_ENV="development"
 ```
 
@@ -226,4 +205,4 @@ refactor(engine): change turn validation logic
 
 ---
 
-**Desarrollado con**: Next.js 16 • React 19 • TypeScript • Prisma • Tailwind CSS • Docker
+**Desarrollado con**: Next.js 16 • React 19 • TypeScript • Prisma • Tailwind CSS

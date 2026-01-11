@@ -98,7 +98,6 @@ Execute in sequential order, use `todo` tool to track progress:
 
 ### 10. Deployment Readiness
 - **Build Verification**: `pnpm build` succeeds, no TypeScript/ESLint errors
-- **Docker Configuration**: `Dockerfile` builds, `docker-compose.dev.yml` runs locally
 - **Database Migrations**: Prisma migrations applied, replica set configured
 - **Rollback Plan**: Blue-Green deployment strategy documented, rollback tested
 
@@ -236,7 +235,6 @@ After completing validation, provide structured report using this template:
 - **NEVER** give generic feedback ("looks good") - be specific
 - **ALWAYS** use `todo` tool to track validation progress
 - **ALWAYS** test both locales (en, es) when UI changes
-- **ALWAYS** verify Docker build succeeds
 - **ALWAYS** run `pnpm build` and check for errors
 - **ALWAYS** provide structured validation report
 - **ALWAYS** base conclusions on evidence (test runs, code inspection)

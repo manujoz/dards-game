@@ -18,7 +18,7 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 7. **Security Review**: Validate authentication, authorization, input sanitization, environment variables
 8. **Documentation Verification**: Ensure code comments, JSDoc, README updates, changelog entries
 9. **Regression Testing**: Confirm no existing functionality broken, run test suite, check related features
-10. **Deployment Readiness**: Verify build success, Docker configuration, environment variables, database migrations
+10. **Deployment Readiness**: Verify build success, environment variables, and database migrations
 
 </workflow>
 
@@ -279,11 +279,10 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - ✅ No ESLint errors (warnings acceptable)
 - ✅ Standalone build output configured correctly
 
-### Docker Configuration
-- ✅ `Dockerfile` builds successfully
-- ✅ `docker-compose.dev.yml` runs locally
-- ✅ Health checks pass
-- ✅ Environment variables documented in `.env.example`
+### Configuración de despliegue
+- ✅ Entorno de despliegue documentado
+- ✅ Health checks definidos cuando aplique
+- ✅ Environment variables documentadas en `.env.example`
 
 ### Database Readiness
 - ✅ Prisma migrations applied: `pnpm prisma migrate deploy`
@@ -294,7 +293,7 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 ### Monitoring & Rollback
 - ✅ Blue-Green deployment strategy documented
 - ✅ Rollback plan tested
-- ✅ Logs accessible (Docker logs or monitoring service)
+- ✅ Logs accesibles (plataforma de hosting o servicio de monitoring)
 - ✅ Health endpoints responding
 
 </deployment_validation>
@@ -317,7 +316,7 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - **ALWAYS** validate both locales work correctly
 - **ALWAYS** test edge cases (zero amounts, concurrent operations, empty states)
 - **ALWAYS** run full test suite before approval
-- **ALWAYS** verify Docker build succeeds
+- **ALWAYS** verify `pnpm build` succeeds
 
 </critical_constraints>
 
@@ -330,7 +329,6 @@ applyTo: '**/*.ts, **/*.tsx, **/*.js, **/*.jsx'
 - **Playwright**: E2E testing (via MCP tools if available)
 - **Lighthouse**: Performance/accessibility audits
 - **MongoDB Compass**: Database inspection, query profiling
-- **Docker**: Local environment testing
 - **curl/Postman**: API endpoint testing (if needed)
 
 </testing_tools>

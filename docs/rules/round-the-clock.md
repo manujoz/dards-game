@@ -1,78 +1,78 @@
-# Round the Clock Rules
+# Reglas de Round the Clock
 
-## Overview
+## Visión General
 
-Players must hit the numbers 1 through 20 (and optionally Bull) in sequential order.
+Los jugadores deben golpear los números 1 al 20 (y opcionalmente Bull) en orden secuencial.
 
-## Configuration
+## Configuración
 
--   **Start Number**: 1.
--   **End Number**: 20 (default), Bull.
--   **Mode**:
-    -   **Singles**: Any segment counts (Single, Double, Triple).
-    -   **Doubles**: Must hit the Double ring.
-    -   **Triples**: Must hit the Triple ring.
+- **Número de Inicio**: 1.
+- **Número Final**: 20 (por defecto), Bull.
+- **Modo**:
+    - **Simples**: Cualquier segmento cuenta (Simple, Doble, Triple).
+    - **Dobles**: Debe golpear el anillo Doble.
+    - **Triples**: Debe golpear el anillo Triple.
 
-## Scoring
+## Puntuación
 
--   **Active Target**: Each player tracks their current target number (starts at 1).
--   **Hit**:
-    -   If the dart hits the Active Target (respecting the Mode constraints):
-        -   The arrow moves to the next number.
-        -   The player can advance multiple steps in one turn.
-    -   If the dart misses the Active Target:
-        -   No progress.
+- **Objetivo Activo**: Cada jugador rastrea su número objetivo actual (comienza en 1).
+- **Impacto**:
+    - Si el dardo golpea el Objetivo Activo (respetando las restricciones de Modo):
+        - El marcador avanza al siguiente número.
+        - El jugador puede avanzar múltiples pasos en un turno.
+    - Si el dardo no golpea el Objetivo Activo:
+        - Sin progreso.
 
-## Win Conditions
+## Condiciones de Victoria
 
--   The first player to successfully hit the **End Number** wins.
+- El primer jugador en golpear exitosamente el **Número Final** gana.
 
-## Edge Cases
+## Casos Especiales
 
--   **Skipping**: Hitting "3" when aiming for "2" counts as a miss. No progress.
--   **Double/Triple in Singles Mode**: Counts as a valid hit. Advances target.
+- **Saltar**: Golpear "3" cuando se apunta a "2" cuenta como un fallo. Sin progreso.
+- **Doble/Triple en Modo Simples**: Cuenta como un impacto válido. Avanza el objetivo.
 
-## Canonical Scenarios (Golden)
+## Escenarios Canónicos (Dorados)
 
-### Scenario 1: Multiple Advances
+### Escenario 1: Múltiples Avances
 
-_Config: Singles, End: 20_
-**State**: Target: 5
-**Turn**:
+_Config: Simples, Final: 20_
+**Estado**: Objetivo: 5
+**Turno**:
 
-1.  **Throw 1**: 5 Single. (Hit! Target advances to 6).
-2.  **Throw 2**: 6 Triple. (Hit! Target advances to 7).
-3.  **Throw 3**: 7 Double. (Hit! Target advances to 8).
-    **Result**: Next turn target is **8**.
+1.  **Dardo 1**: 5 Simple. (¡Impacto! Objetivo avanza a 6).
+2.  **Dardo 2**: 6 Triple. (¡Impacto! Objetivo avanza a 7).
+3.  **Dardo 3**: 7 Doble. (¡Impacto! Objetivo avanza a 8).
+    **Resultado**: El objetivo del siguiente turno es **8**.
 
-### Scenario 2: Missed Target
+### Escenario 2: Objetivo No Alcanzado
 
-_Config: Singles, End: 20_
-**State**: Target: 10
-**Turn**:
+_Config: Simples, Final: 20_
+**Estado**: Objetivo: 10
+**Turno**:
 
-1.  **Throw 1**: 12 Single. (Miss).
-2.  **Throw 2**: 10 Single. (Hit! Target advances to 11).
-3.  **Throw 3**: 12 Single. (Miss).
-    **Result**: Next turn target is **11**.
+1.  **Dardo 1**: 12 Simple. (Fallo).
+2.  **Dardo 2**: 10 Simple. (¡Impacto! Objetivo avanza a 11).
+3.  **Dardo 3**: 12 Simple. (Fallo).
+    **Resultado**: El objetivo del siguiente turno es **11**.
 
-### Scenario 3: Winning Turn
+### Escenario 3: Turno Ganador
 
-_Config: Singles, End: 20_
-**State**: Target: 19
-**Turn**:
+_Config: Simples, Final: 20_
+**Estado**: Objetivo: 19
+**Turno**:
 
-1.  **Throw 1**: 19 Single. (Hit! Target advances to 20).
-2.  **Throw 2**: 20 Single. (Hit! Target advances to End).
-    **Result**: **WIN**. Game Over.
+1.  **Dardo 1**: 19 Simple. (¡Impacto! Objetivo avanza a 20).
+2.  **Dardo 2**: 20 Simple. (¡Impacto! Objetivo avanza a Final).
+    **Resultado**: **VICTORIA**. Fin del Juego.
 
-### Scenario 4: Doubles Mode Strictness
+### Escenario 4: Rigor del Modo Dobles
 
-_Config: Doubles, End: 20_
-**State**: Target: 5
-**Turn**:
+_Config: Dobles, Final: 20_
+**Estado**: Objetivo: 5
+**Turno**:
 
-1.  **Throw 1**: 5 Single. (Miss - needs Double).
-2.  **Throw 2**: 5 Triple. (Miss - needs Double).
-3.  **Throw 3**: 5 Double. (Hit! Target advances to 6).
-    **Result**: Next turn target is **6**.
+1.  **Dardo 1**: 5 Simple. (Fallo - necesita Doble).
+2.  **Dardo 2**: 5 Triple. (Fallo - necesita Doble).
+3.  **Dardo 3**: 5 Doble. (¡Impacto! Objetivo avanza a 6).
+    **Resultado**: El objetivo del siguiente turno es **6**.

@@ -1,4 +1,4 @@
-[← Volver al Principal](../README.md) | [← Despliegue](./README.md) | [Docker](./docker.md)
+[← Volver al Principal](../README.md) | [← Despliegue](./README.md)
 
 ---
 

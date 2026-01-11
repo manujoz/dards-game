@@ -75,7 +75,6 @@ docs/
     routes.md                         # API routes structure
   deployment/
     README.md                         # Deployment section home
-    docker.md                         # Docker setup
     environment.md                    # Environment variables
 ```
 

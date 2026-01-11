@@ -1,62 +1,62 @@
-# Shanghai Rules
+# Reglas de Shanghai
 
-## Overview
+## Visión General
 
-Players score as many points as possible on the active number for the round. There is also an instant-win condition called a "Shanghai".
+Los jugadores anotan tantos puntos como sea posible en el número activo de la ronda. También existe una condición de victoria instantánea llamada "Shanghai".
 
-## Configuration
+## Configuración
 
--   **Rounds**: 1-7 (default) or 1-20.
--   **Numbers**: Round 1 = Number 1, Round 2 = Number 2, ... Round 7 = Number 7.
+- **Rondas**: 1-7 (por defecto) o 1-20.
+- **Números**: Ronda 1 = Número 1, Ronda 2 = Número 2, ... Ronda 7 = Número 7.
 
-## Scoring
+## Puntuación
 
--   **Active Target**: Only hits on the number corresponding to the current round count.
-    -   E.g., Round 3: Only hits on "3" count.
-    -   Misses score 0.
--   **Points**: Value \* Multiplier. Added to total score.
+- **Objetivo Activo**: Solo los impactos en el número correspondiente al contador de ronda actual.
+    - Ej: Ronda 3: Solo impactos en "3" cuentan.
+    - Los fallos anotan 0.
+- **Puntos**: Valor \* Multiplicador. Se suma a la puntuación total.
 
-## Win Conditions
+## Condiciones de Victoria
 
-1.  **High Score**: After all rounds, the player with the highest score wins.
-2.  **Shanghai (Instant Win)**: If a player hits a Single, a Double, AND a Triple of the active number in the _same turn_. The game ends immediately, and that player wins regardless of score.
+1.  **Puntuación Alta**: Después de todas las rondas, el jugador con la puntuación más alta gana.
+2.  **Shanghai (Victoria Instantánea)**: Si un jugador golpea un Simple, un Doble Y un Triple del número activo en el _mismo turno_. El juego termina inmediatamente y ese jugador gana independientemente de la puntuación.
 
-## Edge Cases
+## Casos Especiales
 
--   **Last Round Advantage**: If Player 1 finishes round 7 with 50 points, Player 2 can still win by scoring > 50 points or hitting a Shanghai.
--   **Shanghai Sequence**: Order (S-D-T, T-S-D, etc.) doesn't matter, just need one of each on the specific active number.
+- **Ventaja de Última Ronda**: Si Jugador 1 termina ronda 7 con 50 puntos, Jugador 2 aún puede ganar anotando > 50 puntos o golpeando un Shanghai.
+- **Secuencia de Shanghai**: El orden (S-D-T, T-S-D, etc.) no importa, solo necesitas uno de cada en el número activo específico.
 
-## Canonical Scenarios (Golden)
+## Escenarios Canónicos (Dorados)
 
-### Scenario 1: Standard Scoring
+### Escenario 1: Puntuación Estándar
 
-_Config: 7 Rounds_
-**State**: Round 2 (Target: 2). Score: 10.
-**Turn**:
+_Config: 7 Rondas_
+**Estado**: Ronda 2 (Objetivo: 2). Puntuación: 10.
+**Turno**:
 
-1.  **Throw 1**: 2 Triple. (+6)
-2.  **Throw 2**: 2 Single. (+2)
-3.  **Throw 3**: 19 Single. (Miss/0 points - wrong number).
-    **Result**: Score becomes **18**. Advance to Round 3.
+1.  **Dardo 1**: 2 Triple. (+6)
+2.  **Dardo 2**: 2 Simple. (+2)
+3.  **Dardo 3**: 19 Simple. (Fallo/0 puntos - número incorrecto).
+    **Resultado**: La puntuación se convierte en **18**. Avanza a Ronda 3.
 
-### Scenario 2: The Shanghai (Instant Win)
+### Escenario 2: El Shanghai (Victoria Instantánea)
 
-_Config: 7 Rounds_.
-**State**: Round 5 (Target: 5). Player is losing 20-100.
-**Turn**:
+_Config: 7 Rondas_.
+**Estado**: Ronda 5 (Objetivo: 5). El jugador va perdiendo 20-100.
+**Turno**:
 
-1.  **Throw 1**: 5 Single.
-2.  **Throw 2**: 5 Triple.
-3.  **Throw 3**: 5 Double.
-    **Result**: Player hits Single, Triple, Double of active number. **SHANGHAI WIN**. Game Over.
+1.  **Dardo 1**: 5 Simple.
+2.  **Dardo 2**: 5 Triple.
+3.  **Dardo 3**: 5 Doble.
+    **Resultado**: El jugador golpea Simple, Triple, Doble del número activo. **VICTORIA SHANGHAI**. Fin del Juego.
 
-### Scenario 3: Failed Shanghai
+### Escenario 3: Shanghai Fallido
 
-_Config: 7 Rounds_.
-**State**: Round 4 (Target: 4).
-**Turn**:
+_Config: 7 Rondas_.
+**Estado**: Ronda 4 (Objetivo: 4).
+**Turno**:
 
-1.  **Throw 1**: 4 Single.
-2.  **Throw 2**: 4 Double.
-3.  **Throw 3**: 4 Single. (Duplicate Single).
-    **Result**: Not a Shanghai. Points: 4 + 8 + 4 = 16 points added. Game continues.
+1.  **Dardo 1**: 4 Simple.
+2.  **Dardo 2**: 4 Doble.
+3.  **Dardo 3**: 4 Simple. (Simple Duplicado).
+    **Resultado**: No es un Shanghai. Puntos: 4 + 8 + 4 = 16 puntos añadidos. El juego continúa.

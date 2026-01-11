@@ -1,68 +1,68 @@
-# Halve-It Rules
+# Reglas de Halve-It
 
-## Overview
+## Visión General
 
-A high-stakes game where players attempt to hit specific targets in each round. Failing to hit the target at least once results in the player's total score being cut in half.
+Un juego de alto riesgo donde los jugadores intentan golpear objetivos específicos en cada ronda. No conseguir golpear el objetivo al menos una vez resulta en que la puntuación total del jugador se reduzca a la mitad.
 
-## Configuration
+## Configuración
 
--   **Targets Sequence**: Standard (Default).
-    -   Example Sequence: 20, 16, Double 7, 14, 18, Triple 10, Bull. (Just an example, v1 will have a fixed or selectable list).
-    -   v1 Default: 20, 19, 18, 17, 16, 15, Bull. (Simplified like Cricket but Halve-it rules? Or classic Halve-it mix?).
-    -   Let's define v1 Default based on classic: **20, 16, double 7, 14, 18, triple 10, bull**.
+- **Secuencia de Objetivos**: Estándar (Por defecto).
+    - Ejemplo de Secuencia: 20, 16, Doble 7, 14, 18, Triple 10, Bull. (Solo un ejemplo, v1 tendrá una lista fija o seleccionable).
+    - Por defecto v1: 20, 19, 18, 17, 16, 15, Bull. (¿Simplificado como Cricket pero reglas Halve-it? ¿O mezcla Halve-it clásica?).
+    - Definamos el Por defecto v1 basado en clásico: **20, 16, doble 7, 14, 18, triple 10, bull**.
 
-## Scoring
+## Puntuación
 
--   **Initial Score**: 0 (or sometimes a base like 40 to avoid early 0s, v1 starts at 0).
--   **Turn mechanics**:
-    -   The player throws 3 darts at the current round's Target.
-    -   **Success**: If _at least one_ dart hits the Target (matching segment and constraint like Double/Triple):
-        -   The points for _all valid hits_ are added to the total score.
-        -   (Points = Value \* Multiplier).
-    -   **Failure**: If _none_ of the 3 darts hit the Target:
-        -   The current Total Score is **Halved**.
-        -   Integer division (Floor). Example: 35 / 2 = 17.
+- **Puntuación Inicial**: 0 (o a veces una base como 40 para evitar 0s tempranos, v1 comienza en 0).
+- **Mecánica de turno**:
+    - El jugador lanza 3 dardos al Objetivo de la ronda actual.
+    - **Éxito**: Si _al menos un_ dardo golpea el Objetivo (coincidiendo con segmento y restricción como Doble/Triple):
+        - Los puntos de _todos los impactos válidos_ se suman a la puntuación total.
+        - (Puntos = Valor \* Multiplicador).
+    - **Fallo**: Si _ninguno_ de los 3 dardos golpea el Objetivo:
+        - La Puntuación Total actual es **Dividida a la mitad**.
+        - División entera (Piso). Ejemplo: 35 / 2 = 17.
 
-## Win Conditions
+## Condiciones de Victoria
 
--   Highest score after completing the full sequence of targets.
+- Puntuación más alta después de completar la secuencia completa de objetivos.
 
-## Edge Cases
+## Casos Especiales
 
--   **Zero Score**: Halving 0 results in 0.
--   **Wrong Target**: Hitting 19 when target is 20 counts as 0 points and does not count as a "Success".
+- **Puntuación Cero**: Dividir 0 a la mitad resulta en 0.
+- **Objetivo Incorrecto**: Golpear 19 cuando el objetivo es 20 cuenta como 0 puntos y no cuenta como un "Éxito".
 
-## Canonical Scenarios (Golden)
+## Escenarios Canónicos (Dorados)
 
-### Scenario 1: Success
+### Escenario 1: Éxito
 
-_Config: Standard. Target: 20._
-**State**: Score: 100.
-**Turn**:
+_Config: Estándar. Objetivo: 20._
+**Estado**: Puntuación: 100.
+**Turno**:
 
-1.  **Throw 1**: 20 Single. (Hit. Accum points: 20).
-2.  **Throw 2**: 18 Single. (Miss target).
-3.  **Throw 3**: 20 Triple. (Hit. Accum points: 60).
-    **Result**: Target hit at least once. Score = 100 + 20 + 60 = **180**.
+1.  **Dardo 1**: 20 Simple. (Impacto. Puntos acumulados: 20).
+2.  **Dardo 2**: 18 Simple. (Objetivo no alcanzado).
+3.  **Dardo 3**: 20 Triple. (Impacto. Puntos acumulados: 60).
+    **Resultado**: Objetivo golpeado al menos una vez. Puntuación = 100 + 20 + 60 = **180**.
 
-### Scenario 2: Failure (Halve)
+### Escenario 2: Fallo (Dividir a la mitad)
 
-_Config: Standard. Target: Double 7._
-**State**: Score: 50.
-**Turn**:
+_Config: Estándar. Objetivo: Doble 7._
+**Estado**: Puntuación: 50.
+**Turno**:
 
-1.  **Throw 1**: 7 Single. (Miss constraint - needs Double).
-2.  **Throw 2**: 19 Double. (Miss target).
-3.  **Throw 3**: 7 Single. (Miss constraint).
-    **Result**: Target missed completely. Score = floor(50 / 2) = **25**.
+1.  **Dardo 1**: 7 Simple. (Restricción no cumplida - necesita Doble).
+2.  **Dardo 2**: 19 Doble. (Objetivo no alcanzado).
+3.  **Dardo 3**: 7 Simple. (Restricción no cumplida).
+    **Resultado**: Objetivo no alcanzado completamente. Puntuación = piso(50 / 2) = **25**.
 
-### Scenario 3: Zero handling
+### Escenario 3: Manejo de Cero
 
-_Config: Standard. Target: Bull._
-**State**: Score: 0.
-**Turn**:
+_Config: Estándar. Objetivo: Bull._
+**Estado**: Puntuación: 0.
+**Turno**:
 
-1.  **Throw 1**: 20. (Miss).
-2.  **Throw 2**: 20. (Miss).
-3.  **Throw 3**: 20. (Miss).
-    **Result**: Score = floor(0 / 2) = **0**.
+1.  **Dardo 1**: 20. (Fallo).
+2.  **Dardo 2**: 20. (Fallo).
+3.  **Dardo 3**: 20. (Fallo).
+    **Resultado**: Puntuación = piso(0 / 2) = **0**.

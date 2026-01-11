@@ -1,70 +1,70 @@
-# Killer Rules
+# Reglas de Killer
 
-## Overview
+## Visión General
 
-Survival game. Players are assigned a unique number. They must first become a "Killer" by hitting the double of their number, then eliminate opponents by hitting their numbers.
+Juego de supervivencia. A los jugadores se les asigna un número único. Primero deben convertirse en un "Killer" golpeando el doble de su número, luego eliminan oponentes golpeando sus números.
 
-## Configuration
+## Configuración
 
--   **Lives**: 3, 5 (default).
--   **Assign Mode**: Manual Selection or Random (Unique numbers 1-20).
--   **Self-Suicide**: Off (default).
+- **Vidas**: 3, 5 (por defecto).
+- **Modo de Asignación**: Selección Manual o Aleatoria (Números únicos 1-20).
+- **Auto-Suicidio**: Desactivado (por defecto).
 
-## Scoring / Mechanics
+## Puntuación / Mecánica
 
-1.  **Status**:
-    -   **Normal**: Cannot hurt others. Aim: Hit Double of own number to become Killer.
-    -   **Killer**: Can hurt others. Aim: Hit Opponents' numbers.
-2.  **Becoming Killer**:
-    -   A Normal player must hit the **Double** of their assigned number.
-    -   Once Killer, they stay Killer (unless rules specify resetting, v1: stay Killer).
-3.  **Attacking**:
-    -   A **Killer** throws at an opponent's number.
-    -   **Hit**: Reduces opponent's lives.
-        -   Single: -1 Life.
-        -   Double: -2 Lives.
-        -   Triple: -3 Lives.
-4.  **Elimination**: When lives reach 0 or less, the player is out.
+1.  **Estado**:
+    - **Normal**: No puede herir a otros. Objetivo: Golpear Doble de su número para convertirse en Killer.
+    - **Killer**: Puede herir a otros. Objetivo: Golpear números de Oponentes.
+2.  **Convertirse en Killer**:
+    - Un jugador Normal debe golpear el **Doble** de su número asignado.
+    - Una vez Killer, permanece Killer (a menos que las reglas especifiquen reinicio, v1: permanece Killer).
+3.  **Atacando**:
+    - Un **Killer** lanza a un número de oponente.
+    - **Impacto**: Reduce las vidas del oponente.
+        - Simple: -1 Vida.
+        - Doble: -2 Vidas.
+        - Triple: -3 Vidas.
+4.  **Eliminación**: Cuando las vidas llegan a 0 o menos, el jugador es eliminado.
 
-## Win Conditions
+## Condiciones de Victoria
 
--   The last player (or team) with lives remaining wins.
+- El último jugador (o equipo) con vidas restantes gana.
 
-## Edge Cases
+## Casos Especiales
 
--   **Overkill**: Bringing an opponent from 1 life to -2 does not carry penalty/bonus. Just eliminated.
--   **Hitting own number (Killer)**: No effect (unless specified otherwise).
--   **Hitting own number (Normal)**: No effect.
--   **Hitting dead player**: No effect.
+- **Exceso de daño**: Llevar un oponente de 1 vida a -2 no conlleva penalización/bonificación. Solo eliminado.
+- **Golpear su propio número (Killer)**: Sin efecto (a menos que se especifique lo contrario).
+- **Golpear su propio número (Normal)**: Sin efecto.
+- **Golpear jugador muerto**: Sin efecto.
 
-## Canonical Scenarios (Golden)
+## Escenarios Canónicos (Dorados)
 
-### Scenario 1: Becoming Killer
+### Escenario 1: Convirtiéndose en Killer
 
-_Config: Lives 5. Player A Number: 10._
-**State**: Player A is Normal.
-**Turn**:
+_Config: Vidas 5. Número del Jugador A: 10._
+**Estado**: El Jugador A es Normal.
+**Turno**:
 
-1.  **Throw 1**: 10 Single. (No effect).
-2.  **Throw 2**: 10 Double. (Status Change -> **KILLER**).
-3.  **Throw 3**: 10 Single. (Self-hit as killer -> No effect).
-    **Result**: A is now Killer. Lives: 5.
+1.  **Dardo 1**: 10 Simple. (Sin efecto).
+2.  **Dardo 2**: 10 Doble. (Cambio de Estado -> **KILLER**).
+3.  **Dardo 3**: 10 Simple. (Auto-impacto como killer -> Sin efecto).
+    **Resultado**: A es ahora Killer. Vidas: 5.
 
-### Scenario 2: Attacking
+### Escenario 2: Atacando
 
-_Config: Lives 5. Player A is Killer (Num 10). Player B (Num 20) has 3 Lives._
-**Turn (Player A)**:
+_Config: Vidas 5. Jugador A es Killer (Núm 10). Jugador B (Núm 20) tiene 3 Vidas._
+**Turno (Jugador A)**:
 
-1.  **Throw 1**: 20 Single. (Hit B -> B loses 1 life).
-2.  **Throw 2**: 20 Triple. (Hit B -> B loses 3 lives).
-    **Result**: B Lives: 3 - 1 - 3 = -1 -> **ELIMINATED**.
+1.  **Dardo 1**: 20 Simple. (Impacto en B -> B pierde 1 vida).
+2.  **Dardo 2**: 20 Triple. (Impacto en B -> B pierde 3 vidas).
+    **Resultado**: Vidas de B: 3 - 1 - 3 = -1 -> **ELIMINADO**.
 
-### Scenario 3: Mixed Turn
+### Escenario 3: Turno Mixto
 
-_Config: Lives 5. A (10) Normal, B (20) Normal._
-**Turn (Player A)**:
+_Config: Vidas 5. A (10) Normal, B (20) Normal._
+**Turno (Jugador A)**:
 
-1.  **Throw 1**: 20 Triple. (A is not killer, hits B -> No effect).
-2.  **Throw 2**: 10 Double. (A becomes **KILLER**).
-3.  **Throw 3**: 20 Single. (A is killer, hits B -> B loses 1 life).
-    **Result**: A: Killer. B: 4 Lives.
+1.  **Dardo 1**: 20 Triple. (A no es killer, golpea B -> Sin efecto).
+2.  **Dardo 2**: 10 Doble. (A se convierte en **KILLER**).
+3.  **Dardo 3**: 20 Simple. (A es killer, golpea B -> B pierde 1 vida).
+    **Resultado**: A: Killer. B: 4 Vidas.

@@ -10,7 +10,7 @@ authors: [Implementation Planner]
 ## 1. Context & Analysis
 
 - **Goal**: Crear un juego de dardos táctil a pantalla completa (mouse + touch) con diana circular, multijugador por turnos, efectos (sonido/confeti/flash) y rankings persistentes por modo de juego.
-- **Tech Stack**: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + SQLite + Zod + Vitest + Docker.
+- **Tech Stack**: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + Postgres (Supabase) + Zod + Vitest.
 - **Architecture**: App Router con Server Components por defecto; mutaciones y consultas via Server Actions (prohibido API routes). Lógica de juego aislada en dominio puro (sin React) y testeada.
 
 ### Decisiones cerradas (según feedback)
@@ -51,8 +51,8 @@ authors: [Implementation Planner]
 
 #### Despliegue
 
-- **Una sola pantalla/instalación local** con SQLite (persistencia por volumen Docker).
-- Persistencia de calibración y preferencias del dispositivo: **SQLite** (no localStorage).
+- Despliegue recomendado: **Netlify** con **Supabase (Postgres)**.
+- Persistencia de calibración y preferencias del dispositivo: **Postgres** (no localStorage).
 
 ### Principios de UX (táctil) específicos
 
@@ -166,11 +166,6 @@ Para reducir fricción al usuario final:
   postcss.config.mjs  (new)
   tailwind.config.ts  (new)
   components.json  (new, shadcn)
-  docker/
-    Dockerfile  (new)
-    Dockerfile.dev  (new)
-  docker-compose.yml  (new)
-  docker-compose.dev.yml  (new)
   .env.example  (new)
   docs/
     rules/
@@ -279,7 +274,7 @@ Para reducir fricción al usuario final:
 - **Details**: Para cada juego v1, añadir 3–5 escenarios mínimos (secuencia de hits por jugador) y el scoreboard esperado por turno. Estos escenarios se usarán como base directa de tests.
 - **Verification**: Cada `*.md` en `docs/rules/` incluye tabla “Scenario → Expected”.
 
-### Phase 1: Base del proyecto (Next.js + shadcn/ui + Docker)
+### Phase 1: Base del proyecto (Next.js + shadcn/ui)
 
 - [x] **Step 1.1**: Inicializar Next.js en raíz `/home/apps/dards` (`package.json`, `src/`)
 - **Details**: Crear app App Router con TypeScript, Tailwind, ESLint, alias `@/* -> ./src/*`, 4 espacios y comillas dobles. Usar pnpm.
@@ -288,10 +283,6 @@ Para reducir fricción al usuario final:
 - [x] **Step 1.2**: Instalar y configurar shadcn/ui
 - **Details**: Añadir `components.json` y generar componentes shadcn necesarios (Button, Dialog, Sheet, Tabs, Tooltip, Switch, Select, Toast). Mantener `src/components/ui/`.
 - **Verification**: Se renderiza un `Dialog` de ejemplo.
-
-- [x] **Step 1.3**: Dockerizar entorno dev y prod
-- **Details**: Crear `docker-compose.dev.yml` con hot-reload y volumen para SQLite; `docker-compose.yml` para prod. Añadir healthcheck HTTP.
-- **Verification**: En dev, recarga al editar; la DB persiste tras restart.
 
 - [x] **Step 1.4**: Variables de entorno
 - **Details**: Crear `.env.example` con `DATABASE_URL` y flags (sonido/efectos, modo demo). Documentar valores default.
@@ -349,7 +340,7 @@ Para reducir fricción al usuario final:
 - **Details**: Implementar mapping robusto para bull/outer bull, singles, doubles, triples y fuera. Debe operar con coordenadas normalizadas y un estado de calibración.
 - **Verification**: `score-mapper.test.ts` cubre bull, triple 20, double 20, fuera.
 
-### Phase 6: Calibración (persistencia SQLite)
+### Phase 6: Calibración (persistencia Postgres)
 
 - [x] **Step 6.1**: Modelo de calibración en dominio
 - **Details**: Definir estructura: centro, radio, rotación, offsets, y opcional corrección de aspect ratio. Debe serializarse a JSON para DB.
@@ -361,7 +352,7 @@ Para reducir fricción al usuario final:
 
 - [x] **Step 6.3**: Persistir calibración en `DeviceConfig`
 - **Details**: Acciones para leer/guardar calibración. Definir política “single row” (id fijo) para instalación local.
-- **Verification**: Tras reiniciar contenedor, calibración sigue.
+- **Verification**: Guardar calibración y recargar conserva valores.
 
 ### Phase 7: Motor de juego (turnos, equipos, legs/sets, undo)
 
@@ -508,7 +499,7 @@ Para reducir fricción al usuario final:
 - **Verification**: Checklist completado y documentado en PR.
 
 - [ ] **Step 14.3**: Documentación `docs/`
-- **Details**: Añadir docs de Docker y motor de juego siguiendo estándares del repo.
+- **Details**: Añadir/actualizar docs del motor de juego siguiendo estándares del repo.
 - **Verification**: Links bidireccionales y footer correcto.
 
 ## 4. Verification Plan
@@ -519,4 +510,4 @@ Para reducir fricción al usuario final:
 - [ ] Verificación de orientación: rotar portrait/landscape y mantener calibración.
 - [ ] Verificación de fullscreen: entrar/salir sin romper input.
 - [ ] Verificación de bull: sonido especial + flash + confeti 2–3s.
-- [ ] Docker dev/prod: build y run exitosos con volumen persistente SQLite.
+- [ ] Deploy: verificación en Netlify con migraciones Prisma aplicadas.

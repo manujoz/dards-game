@@ -60,13 +60,6 @@ Video juego de dardos para pantallas táctiles con diferentes modos de juego y m
 6. Build verification con `pnpm build`
 7. PR review antes de merge
 
-## Docker Development
-
-- **Start**: `pnpm docker:dev` (MongoDB + App en :3003)
-- **Rebuild**: `pnpm docker:build` (cuando cambian dependencias)
-- **Reset**: `pnpm docker:reset` (limpia BD y reconstruye)
-- **Stop**: `pnpm docker:down`
-
 </workflow_guidelines>
 
 <git_commits>
@@ -105,7 +98,7 @@ Format: `type(INV-###): prefix subject`
 - ✅ **ALWAYS**: Convertir String → Decimal para cálculos precisos
 - ✅ **ALWAYS**: Usar `try-catch` en Server Actions con retorno consistente
 - ✅ **ALWAYS**: Validar inputs con Zod antes de operaciones DB
-- ✅ **ALWAYS**: Incluir healthchecks en Docker configurations
+- ✅ **ALWAYS**: Incluir healthchecks cuando haya configuración de despliegue/infra
 - ✅ **ALWAYS**: Escribir tests para lógica de negocio crítica (Tax Lots, strategies)
 - ✅ **ALWAYS**: Seguir convenciones de commit para historial claro
 - ✅ **ALWAYS**: Tipar correctamente en TypeScript sin usar any, siempre definir tipos e interfaces siguiendo las instrucciones

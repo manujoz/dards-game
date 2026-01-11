@@ -25,16 +25,16 @@
 
 ## Stack Tecnológico
 
-| Capa              | Tecnología              | Propósito                               |
-| :---------------- | :---------------------- | :-------------------------------------- |
-| **Framework**     | Next.js 16 (App Router) | SSR, Server Actions, Routing            |
-| **UI**            | React 19, Shadcn/ui     | Componentes, Radix primitives           |
-| **Estilos**       | Tailwind CSS            | Utility-first styling                   |
-| **Base de Datos** | Prisma + SQLite         | ORM, migraciones, seed data             |
-| **Validación**    | Zod                     | Runtime validation para Server Actions  |
-| **Testing**       | Vitest                  | Unit tests para lógica de juego         |
-| **Deploy**        | Docker + Docker Compose | Desarrollo y producción containerizados |
-| **Audio**         | Web Audio API           | Reproducción de efectos de sonido       |
+| Capa              | Tecnología              | Propósito                                |
+| :---------------- | :---------------------- | :--------------------------------------- |
+| **Framework**     | Next.js 16 (App Router) | SSR, Server Actions, Routing             |
+| **UI**            | React 19, Shadcn/ui     | Componentes, Radix primitives            |
+| **Estilos**       | Tailwind CSS            | Utility-first styling                    |
+| **Base de Datos** | Prisma + Supabase       | ORM, migraciones, persistencia           |
+| **Validación**    | Zod                     | Runtime validation para Server Actions   |
+| **Testing**       | Vitest                  | Unit tests para lógica de juego          |
+| **Deploy**        | Netlify                 | Deploy de Next.js + variables de entorno |
+| **Audio**         | Web Audio API           | Reproducción de efectos de sonido        |
 
 ## Estructura de Documentación
 
@@ -52,7 +52,7 @@
 
 ### [🚀 Despliegue](./deployment/README.md)
 
-- [Docker](./deployment/docker.md) - Comandos y configuración de contenedores
+- [Netlify + Supabase (Postgres)](./deployment/netlify.md) - Deploy en Netlify, variables de entorno y migraciones Prisma
 
 ### [📖 Reglas de Juego](./rules/README.md)
 
@@ -70,9 +70,6 @@ pnpm dlx prisma db seed
 
 # Desarrollo local
 pnpm dev
-
-# O con Docker
-pnpm docker:dev
 ```
 
 **Accesos**:
