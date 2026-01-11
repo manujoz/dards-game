@@ -12,6 +12,7 @@ export type GameHudLayout = "landscape" | "portrait";
 export interface GameScoreboardProps {
     gameState: GameState;
     layout: GameHudLayout;
+    isPaused: boolean;
     onOpenCricketMarks?: () => void;
 }
 

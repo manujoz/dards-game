@@ -32,6 +32,15 @@ export function GameController({ initialState }: GameControllerProps) {
     const boardContainerRef = useRef<HTMLDivElement>(null);
     const [lastScreenHit, setLastScreenHit] = useState<{ x: number; y: number; kind: "hit" | "miss" } | null>(null);
 
+    const LANDSCAPE_SCOREBOARD_WIDTH_PX = 280;
+    let boardMaxSizeStyle: { maxWidth: string; maxHeight: string } | undefined;
+    if (!isPortrait) {
+        boardMaxSizeStyle = {
+            maxWidth: `min(80vh, calc(100vw - ${LANDSCAPE_SCOREBOARD_WIDTH_PX * 2}px))`,
+            maxHeight: "80vh",
+        };
+    }
+
     // NOTE: This component is remounted when matchId changes (see the page `key`).
 
     const isAwaitingNextTurn = Boolean(gameState && gameState.status === "active" && GameEngine.isTurnComplete(gameState));
@@ -221,34 +230,40 @@ export function GameController({ initialState }: GameControllerProps) {
             <TurnHud gameState={gameState} />
 
             {/* Main Layout */}
-            <div className={cn("flex-1 flex", isPortrait ? "flex-col" : "flex-row")}>
+            <div className="flex-1 relative">
                 {!isPortrait && (
-                    <GameScoreboard
-                        gameState={gameState}
-                        layout="landscape"
-                        onOpenCricketMarks={gameState.config.type === "cricket" ? () => setCricketMarksOpen(true) : undefined}
-                    />
-                )}
-
-                {/* Game Area */}
-                <div className="flex-1 flex items-center justify-center p-4">
-                    <div ref={boardContainerRef} className="max-w-[80vh] max-h-[80vh] w-full h-full aspect-square">
-                        <DartboardCanvas
-                            onThrow={(hit) => handleThrow(hit)}
-                            disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused}
-                        />
-                    </div>
-                </div>
-
-                {isPortrait && (
-                    <div className="w-full">
+                    <div className="absolute inset-y-0 left-0 z-20">
                         <GameScoreboard
                             gameState={gameState}
-                            layout="portrait"
+                            layout="landscape"
+                            isPaused={isPaused}
                             onOpenCricketMarks={gameState.config.type === "cricket" ? () => setCricketMarksOpen(true) : undefined}
                         />
                     </div>
                 )}
+
+                <div className={cn("h-full w-full flex", isPortrait ? "flex-col" : "flex-row")}>
+                    {/* Game Area */}
+                    <div className="flex-1 flex items-center justify-center p-4">
+                        <div ref={boardContainerRef} className="w-full h-full aspect-square" style={boardMaxSizeStyle}>
+                            <DartboardCanvas
+                                onThrow={(hit) => handleThrow(hit)}
+                                disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused}
+                            />
+                        </div>
+                    </div>
+
+                    {isPortrait && (
+                        <div className="w-full">
+                            <GameScoreboard
+                                gameState={gameState}
+                                layout="portrait"
+                                isPaused={isPaused}
+                                onOpenCricketMarks={gameState.config.type === "cricket" ? () => setCricketMarksOpen(true) : undefined}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Footer / Controls */}

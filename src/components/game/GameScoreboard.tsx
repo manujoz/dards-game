@@ -23,12 +23,17 @@ function getCricketExtras(row: { marks?: Record<string, number> }): { closedCoun
     return { closedCount, total: targets.length };
 }
 
-export function GameScoreboard({ gameState, layout, onOpenCricketMarks }: GameScoreboardProps) {
+export function GameScoreboard({ gameState, layout, isPaused, onOpenCricketMarks }: GameScoreboardProps) {
     const scoreboard = getGameLogic(gameState.config.type).getScoreboard(gameState);
+
+    // Scoreboard should only be interactive when the match is paused.
+    // Otherwise, taps on it should register as a MISS via the global handler.
+    const allowInteraction = isPaused || gameState.status !== "active";
+    const pointerEventsClassName = allowInteraction ? "pointer-events-auto" : "pointer-events-none";
 
     if (layout === "portrait") {
         return (
-            <div className="w-full px-3 pb-3" data-no-throw="true" onPointerDown={(e) => e.stopPropagation()}>
+            <div className={cn("w-full px-3 pb-3", pointerEventsClassName)}>
                 <div className="flex items-center justify-between mb-2">
                     <div className="text-xs text-slate-400">{scoreboard.roundIndicator}</div>
 
@@ -92,7 +97,7 @@ export function GameScoreboard({ gameState, layout, onOpenCricketMarks }: GameSc
 
     // Landscape: left vertical list
     return (
-        <aside className="h-full w-[240px] max-w-[38vw] p-4" data-no-throw="true" onPointerDown={(e) => e.stopPropagation()}>
+        <aside className={cn("h-full w-[240px] max-w-[38vw] p-4", pointerEventsClassName)}>
             <div className="bg-slate-900/65 backdrop-blur rounded-2xl border border-slate-800 shadow-xl h-full flex flex-col overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-800">
                     <div className="text-xs text-slate-400 uppercase tracking-wider">{scoreboard.gameType.toUpperCase()}</div>
