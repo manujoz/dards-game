@@ -2,6 +2,42 @@ import { getCurrentPlayerState } from "@/lib/game/game-engine";
 import { GameConfig, GameState, Hit, Player, RoundTheClockConfig, RoundTheClockStats, Scoreboard, Throw } from "@/types/models/darts";
 import { GameLogic } from "./interface";
 
+function ensureRoundTheClockStats(state: GameState, playerState: { score: number; stats: unknown }): RoundTheClockStats {
+    const config = state.config as Partial<RoundTheClockConfig>;
+    const startNumber = typeof config.startNumber === "number" ? config.startNumber : 1;
+    const endNumber = typeof config.endNumber === "number" ? config.endNumber : 25;
+
+    const rawStats = (playerState.stats ?? {}) as Partial<RoundTheClockStats>;
+    const existingTarget = typeof rawStats.target === "number" ? rawStats.target : undefined;
+
+    let target = existingTarget;
+    if (target === undefined) {
+        // Prefer config default when we don't have game-specific init applied.
+        target = startNumber;
+
+        // If score seems meaningful, try to infer the next target from it.
+        if (typeof playerState.score === "number" && playerState.score > 0) {
+            target = playerState.score + 1;
+        }
+
+        // Special case: after 20, some configs go to Bull (25).
+        if (playerState.score === 20 && endNumber === 25) {
+            target = 25;
+        }
+
+        // Clamp to endNumber to avoid weird UI values if the persisted state is inconsistent.
+        target = Math.min(target, endNumber);
+    }
+
+    const normalized: RoundTheClockStats = {
+        ...rawStats,
+        target,
+    };
+
+    playerState.stats = normalized;
+    return normalized;
+}
+
 export class RoundTheClockGame implements GameLogic {
     init(config: GameConfig, players: Player[]): Partial<GameState> {
         const rtcConfig = config as RoundTheClockConfig;
@@ -18,7 +54,7 @@ export class RoundTheClockGame implements GameLogic {
 
     processThrow(state: GameState, hit: Hit): Throw {
         const playerState = getCurrentPlayerState(state);
-        const stats = playerState.stats as RoundTheClockStats;
+        const stats = ensureRoundTheClockStats(state, playerState);
         const config = state.config as RoundTheClockConfig;
         const target = stats.target;
 
@@ -67,7 +103,7 @@ export class RoundTheClockGame implements GameLogic {
             roundIndicator: `Round ${state.currentRound}`,
             headers: ["Target"],
             rows: state.playerStates.map((ps) => {
-                const stats = ps.stats as RoundTheClockStats;
+                const stats = ensureRoundTheClockStats(state, ps);
                 const player = state.players.find((p) => p.id === ps.playerId)!;
                 const isWinner = state.winnerId === ps.playerId;
 

@@ -1,15 +1,21 @@
 "use client";
 
-import { DartboardCanvas } from "@/components/game/DartboardCanvas";
 import { CheckoutBustOverlay } from "@/components/game/CheckoutBustOverlay";
+import { CricketMarksOverlay } from "@/components/game/CricketMarksOverlay";
+import { DartboardCanvas } from "@/components/game/DartboardCanvas";
 import { GameEffects } from "@/components/game/GameEffects";
+import { GameScoreboard } from "@/components/game/GameScoreboard";
 import { HiddenTopBar } from "@/components/game/HiddenTopBar";
 import { TurnHud } from "@/components/game/TurnHud";
 import { soundManager } from "@/lib/audio/sounds";
+import { BOARD_DIMENSIONS_MM } from "@/lib/game/board-geometry";
+import { transformCoordinates } from "@/lib/game/calibration";
 import { GameEngine } from "@/lib/game/game-engine";
 import { getGameLogic } from "@/lib/game/games";
-import { GameState, Hit } from "@/types/models/darts";
-import { ArrowRight } from "lucide-react";
+import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
+import { cn } from "@/lib/utils";
+import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
+import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface GameControllerProps {
@@ -20,11 +26,13 @@ export function GameController({ initialState }: GameControllerProps) {
     const [gameState, setGameState] = useState<GameState | null>(initialState);
     const isAwaitingNextTurnRef = useRef(false);
     const [checkoutBustOverlay, setCheckoutBustOverlay] = useState<{ title: string; message: string } | null>(null);
+    const [isPaused, setIsPaused] = useState(false);
+    const [isPortrait, setIsPortrait] = useState(false);
+    const [cricketMarksOpen, setCricketMarksOpen] = useState(false);
+    const boardContainerRef = useRef<HTMLDivElement>(null);
+    const [lastScreenHit, setLastScreenHit] = useState<{ x: number; y: number; kind: "hit" | "miss" } | null>(null);
 
-    // If props change (e.g. new match loaded), update state
-    useEffect(() => {
-        setGameState(initialState);
-    }, [initialState]);
+    // NOTE: This component is remounted when matchId changes (see the page `key`).
 
     const isAwaitingNextTurn = Boolean(gameState && gameState.status === "active" && GameEngine.isTurnComplete(gameState));
 
@@ -32,11 +40,75 @@ export function GameController({ initialState }: GameControllerProps) {
         isAwaitingNextTurnRef.current = isAwaitingNextTurn;
     }, [isAwaitingNextTurn]);
 
+    useEffect(() => {
+        const update = () => {
+            if (typeof window === "undefined") return;
+            setIsPortrait(window.innerHeight > window.innerWidth);
+        };
+
+        update();
+        window.addEventListener("resize", update);
+        return () => window.removeEventListener("resize", update);
+    }, []);
+
+    useEffect(() => {
+        if (!lastScreenHit) return;
+        const t = window.setTimeout(() => setLastScreenHit(null), 350);
+        return () => window.clearTimeout(t);
+    }, [lastScreenHit]);
+
+    function getAutoCalibrationFromRect(rect: DOMRect): CalibrationConfig {
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const minDim = Math.min(rect.width, rect.height);
+        const outerRadiusPx = (minDim / 2) * 0.95;
+        const scoringRadiusPx = outerRadiusPx * 0.84;
+
+        const scale = scoringRadiusPx / BOARD_DIMENSIONS_MM.DOUBLE_OUTER_R;
+
+        return {
+            centerX,
+            centerY,
+            scale,
+            rotation: 0,
+        };
+    }
+
+    function handleGlobalPointerDown(e: React.PointerEvent<HTMLElement>) {
+        if (!gameState) return;
+        if (gameState.status === "completed") return;
+        if (isPaused) return;
+        if (isAwaitingNextTurn) return;
+        if (isAwaitingNextTurnRef.current) return;
+
+        const target = e.target as Element | null;
+        if (target?.closest("[data-no-throw='true']")) return;
+
+        const boardEl = boardContainerRef.current;
+        if (!boardEl) return;
+
+        // Unlock audio on interaction
+        soundManager.unlock();
+
+        const rect = boardEl.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+
+        const cal = getAutoCalibrationFromRect(rect);
+        const boardCoords = transformCoordinates(screenX, screenY, cal);
+        const hit = mapCoordinatesToHit(boardCoords.x, boardCoords.y);
+
+        setLastScreenHit({ x: e.clientX, y: e.clientY, kind: hit.multiplier === 0 ? "miss" : "hit" });
+        handleThrow(hit);
+    }
+
     const handleThrow = (hit: Hit) => {
         if (!gameState) return;
         if (gameState.status === "completed") return;
         if (isAwaitingNextTurn) return;
         if (isAwaitingNextTurnRef.current) return;
+        if (isPaused) return;
 
         // Unlock audio on interaction
         soundManager.unlock();
@@ -106,6 +178,13 @@ export function GameController({ initialState }: GameControllerProps) {
         setGameState(GameEngine.nextTurn(gameState));
     };
 
+    const handleTogglePause = () => {
+        if (!gameState) return;
+        if (gameState.status !== "active") return;
+        if (isAwaitingNextTurn) return;
+        setIsPaused((prev) => !prev);
+    };
+
     if (!gameState) {
         return (
             <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
@@ -117,7 +196,7 @@ export function GameController({ initialState }: GameControllerProps) {
     }
 
     return (
-        <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col">
+        <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col" onPointerDown={handleGlobalPointerDown}>
             <HiddenTopBar />
             <GameEffects gameState={gameState} />
             <CheckoutBustOverlay
@@ -126,14 +205,50 @@ export function GameController({ initialState }: GameControllerProps) {
                 message={checkoutBustOverlay?.message ?? ""}
                 onClose={() => setCheckoutBustOverlay(null)}
             />
+            <CricketMarksOverlay open={cricketMarksOpen} gameState={gameState} onClose={() => setCricketMarksOpen(false)} />
+
+            {lastScreenHit && (
+                <div
+                    className={cn(
+                        "absolute z-40 w-4 h-4 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none",
+                        lastScreenHit.kind === "miss" ? "bg-red-500" : "bg-emerald-400",
+                    )}
+                    style={{ left: lastScreenHit.x, top: lastScreenHit.y }}
+                />
+            )}
+
             {/* HUD Layer */}
             <TurnHud gameState={gameState} />
 
-            {/* Game Area */}
-            <div className="flex-1 flex items-center justify-center p-4">
-                <div className="max-w-[80vh] max-h-[80vh] w-full h-full aspect-square">
-                    <DartboardCanvas onThrow={handleThrow} disabled={gameState.status === "completed" || isAwaitingNextTurn} />
+            {/* Main Layout */}
+            <div className={cn("flex-1 flex", isPortrait ? "flex-col" : "flex-row")}>
+                {!isPortrait && (
+                    <GameScoreboard
+                        gameState={gameState}
+                        layout="landscape"
+                        onOpenCricketMarks={gameState.config.type === "cricket" ? () => setCricketMarksOpen(true) : undefined}
+                    />
+                )}
+
+                {/* Game Area */}
+                <div className="flex-1 flex items-center justify-center p-4">
+                    <div ref={boardContainerRef} className="max-w-[80vh] max-h-[80vh] w-full h-full aspect-square">
+                        <DartboardCanvas
+                            onThrow={(hit) => handleThrow(hit)}
+                            disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused}
+                        />
+                    </div>
                 </div>
+
+                {isPortrait && (
+                    <div className="w-full">
+                        <GameScoreboard
+                            gameState={gameState}
+                            layout="portrait"
+                            onOpenCricketMarks={gameState.config.type === "cricket" ? () => setCricketMarksOpen(true) : undefined}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Footer / Controls */}
@@ -151,6 +266,8 @@ export function GameController({ initialState }: GameControllerProps) {
                         <button
                             type="button"
                             onClick={handleNextTurn}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            data-no-throw="true"
                             className={
                                 "w-[120px] h-[120px] rounded-full bg-gradient-to-br from-red-500 to-red-700 " +
                                 "shadow-[0_20px_60px_rgba(220,38,38,0.35)] border border-red-300/25 " +
@@ -168,12 +285,41 @@ export function GameController({ initialState }: GameControllerProps) {
                     </div>
                 )}
 
+                {!isAwaitingNextTurn && gameState.status === "active" && (
+                    <div className="pointer-events-auto">
+                        <button
+                            type="button"
+                            onClick={handleTogglePause}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            data-no-throw="true"
+                            className={
+                                "w-[120px] h-[120px] rounded-full bg-gradient-to-br from-slate-700 to-slate-900 " +
+                                "shadow-[0_20px_60px_rgba(15,23,42,0.50)] border border-slate-500/20 " +
+                                "flex flex-col items-center justify-center gap-2 text-white font-extrabold " +
+                                "transition-transform active:scale-95 hover:brightness-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-400/30"
+                            }
+                        >
+                            {isPaused ? <Play className="h-7 w-7" /> : <Pause className="h-7 w-7" />}
+                            <span className="text-center leading-tight">{isPaused ? "Reanudar" : "Pausar"}</span>
+                        </button>
+                    </div>
+                )}
+
                 {gameState.status === "completed" && (
                     <div className="pointer-events-auto bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl animate-bounce font-bold">
                         GAME OVER! Winner: {gameState.players.find((p) => p.id === gameState.winnerId)?.name}
                     </div>
                 )}
             </div>
+
+            {isPaused && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none" aria-hidden="true">
+                    <div className="bg-slate-950/55 border border-slate-700 text-white px-6 py-4 rounded-2xl backdrop-blur shadow-2xl">
+                        <div className="text-2xl font-extrabold">PAUSADO</div>
+                        <div className="text-sm text-slate-300 mt-1">Toca “Reanudar” para seguir</div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

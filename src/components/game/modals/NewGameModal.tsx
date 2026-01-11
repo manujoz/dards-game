@@ -72,7 +72,13 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                     numbers: [20, 19, 18, 17, 16, 15, 25],
                 };
             } else if (gameType === "round_the_clock") {
-                config = { ...baseConfig, type: "round_the_clock", mode: "singles" };
+                config = {
+                    ...baseConfig,
+                    type: "round_the_clock",
+                    mode: "singles",
+                    startNumber: 1,
+                    endNumber: 25,
+                };
             } else if (gameType === "killer") {
                 config = { ...baseConfig, type: "killer", lives: 5, killMode: "double_to_kill" };
             } else if (gameType === "shanghai") {

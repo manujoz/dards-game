@@ -261,6 +261,8 @@ export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasPr
 
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (disabled || !containerRef.current) return;
+        // Avoid bubbling to any parent "full screen" handlers.
+        e.stopPropagation();
 
         const rect = containerRef.current.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
