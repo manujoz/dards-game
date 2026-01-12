@@ -139,10 +139,19 @@ export async function getRankings(input?: GetRankingsRequest | RankingGameType):
             });
 
             if (ratings.length === 0) {
+                const completedMatches = await prisma.match.count({
+                    where: {
+                        status: "completed",
+                    },
+                });
+
                 return {
                     success: true,
                     data: [],
-                    message: "El ranking global (Todos) todavía no tiene datos. Termina alguna partida o ejecuta el recompute de rankings.",
+                    message:
+                        completedMatches === 0
+                            ? "Aún no hay partidas completadas. Termina una partida para ver la clasificación."
+                            : "Hay partidas completadas pero el ranking global está vacío. Ejecuta el recompute de rankings para reconstruirlo.",
                 };
             }
 
