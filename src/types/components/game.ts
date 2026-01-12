@@ -1,4 +1,14 @@
-import type { GameState, Hit } from "@/types/models/darts";
+import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
+
+export interface GameControllerProps {
+    initialState: GameState | null;
+}
+
+export interface CalibrationModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    getBoardRect: () => DOMRect | null;
+}
 
 export interface CheckoutBustOverlayProps {
     open: boolean;
@@ -26,6 +36,7 @@ export interface HiddenTopBarProps {
     defaultShowNewGame?: boolean;
     canRestartSameConfig?: boolean;
     onRestartSameConfig?: () => void;
+    getBoardRect?: () => DOMRect | null;
 }
 
 export interface DartboardCanvasThrowCoordinates {
@@ -40,5 +51,6 @@ export interface DartboardCanvasMarker {
 
 export interface DartboardCanvasProps {
     onThrow: (hit: Hit, coordinates: DartboardCanvasThrowCoordinates) => boolean;
+    calibration?: CalibrationConfig | null;
     disabled?: boolean;
 }

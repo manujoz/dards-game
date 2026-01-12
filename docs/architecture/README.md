@@ -51,5 +51,11 @@ Sistema de mapping de coordenadas táctiles → segmentos del tablero:
 ## Documentación de Arquitectura
 
 - [**Motor de Juego**](./game-engine.md) - Flujo de turnos, validación de reglas, inmutabilidad
+- [**Multi-dispositivo: device lock**](./multiplayer-device-lock.md) - Lease/TTL por dispositivo para evitar concurrencia al reanudar partidas
+
+## Secciones relacionadas
+
+- [API](../api/README.md)
+- [Componentes](../components/README.md)
 
 ---

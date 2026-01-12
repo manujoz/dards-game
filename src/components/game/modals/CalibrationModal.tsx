@@ -1,19 +1,19 @@
 "use client";
 
+import type { CalibrationModalProps } from "@/types/components/game";
+
 import { updateCalibration } from "@/app/actions/device-config";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getOrCreateDeviceId } from "@/lib/device/device-id";
+import { BOARD_DIMENSIONS_MM } from "@/lib/game/board-geometry";
+import { computeCalibrationFromPoints } from "@/lib/game/calibration";
 import { Loader2, Target } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
-interface CalibrationModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
 type CalibrationStep = "intro" | "center" | "perimeter" | "saving" | "complete";
 
-export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) {
+export function CalibrationModal({ open, onOpenChange, getBoardRect }: CalibrationModalProps) {
     const [step, setStep] = useState<CalibrationStep>("intro");
     const [centerPoint, setCenterPoint] = useState<{ x: number; y: number } | null>(null);
     const [, startTransition] = useTransition();
@@ -33,76 +33,37 @@ export function CalibrationModal({ open, onOpenChange }: CalibrationModalProps) 
     }, [open, step]);
 
     const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = getBoardRect();
+        if (!rect) {
+            console.error("No se ha podido calibrar: no se encuentra el área de la diana");
+            reset();
+            return;
+        }
+
+        const localPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
         if (step === "center") {
-            setCenterPoint({ x: e.clientX, y: e.clientY });
+            setCenterPoint(localPoint);
             setStep("perimeter");
         } else if (step === "perimeter") {
-            const p = { x: e.clientX, y: e.clientY };
-            saveCalibration(centerPoint!, p);
+            saveCalibration(rect, centerPoint!, localPoint);
         }
     };
 
-    const saveCalibration = (center: { x: number; y: number }, _perimeter: { x: number; y: number }) => {
+    const saveCalibration = (rect: DOMRect, center: { x: number; y: number }, perimeter: { x: number; y: number }) => {
         setStep("saving");
 
-        // Simple calibration logic:
-        // Assume screen center should match board center.
-        // We calculate offset based on touched center vs screen center?
-        // Actually, the game engine usually assumes center is (window.innerWidth/2, window.innerHeight/2).
-        // If the projected image is shifted, we need an offset.
-        // For now, let's just save the raw points or computed offset/scale.
-
-        // Let's compute a basic offset.
-        // If the user touched the physical center, that point (e.clientX, e.clientY) IS the center.
-        // The game engine (DartboardCanvas) renders at center of screen.
-        // So we need to shift the canvas or shift the input?
-        // Typically we shift the input coordinates to match the logical center.
-        // Logical Center = (window.innerWidth / 2, window.innerHeight / 2)
-        // Measured Center = (center.x, center.y)
-        // OffsetX = Measured Center.x - Logical Center.x
-        // OffsetY = Measured Center.y - Logical Center.y
-
-        // However, the action expects `DeviceCalibration` object.
-        // Let's just save the raw click for center as offset relative to screen top-left?
-        // No, `offsetX` and `offsetY` in schema.
-
-        // Let's assume we want to map the physical touch to the logical board coordinate system.
-        // We'll save the "center" coordinates in pixels relative to viewport.
-        // And maybe scale based on the "perimeter" click (e.g. Double 20).
-        // Distance from Center to Double 20 in logical units is fixed (e.g. 170mm or normalized units).
-        // Distance in pixels = sqrt((px-cx)^2 + (py-cy)^2).
-        // Scale = LogicalDistance / PixelDistance.
-
-        // For this implementation, I will just save the center offset and a default scale for now.
-        // Since I don't have the "Logical Distance" constant handy here (it's in game-engine likely),
-        // I will just save what I can.
-
-        /* 
-           Assuming logical board radius ~ 35-40% of screen height is the standard.
-           Let's just save the inputs into the structure expected by Zod.
-        */
-
-        const logicalCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        const offsetX = center.x - logicalCenter.x;
-        const offsetY = center.y - logicalCenter.y;
-
-        // Calculate scale?
-        // Let's say perimeter is Double 20 (Top).
-        // dist = Math.abs(perimeter.y - center.y);
-        // Let's defer complex math and just save defaults + offset.
+        const refDistanceMm = (BOARD_DIMENSIONS_MM.DOUBLE_INNER_R + BOARD_DIMENSIONS_MM.DOUBLE_OUTER_R) / 2;
+        const partial = computeCalibrationFromPoints(center, perimeter, refDistanceMm);
+        const deviceId = getOrCreateDeviceId();
 
         startTransition(async () => {
-            const res = await updateCalibration({
-                scaleX: 1,
-                scaleY: 1,
-                offsetX: offsetX,
-                offsetY: offsetY,
-                matrix: [
-                    [1, 0, 0],
-                    [0, 1, 0],
-                    [0, 0, 1],
-                ], // Identity
-                quadrants: [],
+            const res = await updateCalibration(deviceId, {
+                centerX: partial.centerX ?? center.x,
+                centerY: partial.centerY ?? center.y,
+                scale: partial.scale ?? 1,
+                rotation: partial.rotation ?? 0,
+                aspectRatio: rect.width / rect.height,
             });
 
             if (res.success) {

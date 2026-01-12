@@ -1,20 +1,25 @@
 import { z } from "zod";
 
-export const pointCalibrationSchema = z.object({
-    x: z.number(),
-    y: z.number(),
-    segment: z.number(),
-    ring: z.string(), // "single", "double", "triple", "bull", "bullseye"
+/**
+ * Calibración unificada (Opción B): compatible con `CalibrationConfig`.
+ *
+ * NOTA: estos valores se almacenan en coordenadas locales del área de diana (px),
+ * y `scale` representa px/mm.
+ */
+export const calibrationConfigSchema = z.object({
+    centerX: z.number().finite(),
+    centerY: z.number().finite(),
+    scale: z.number().positive(),
+    rotation: z.number().finite(),
+    aspectRatio: z.number().positive().optional(),
 });
 
-export const deviceCalibrationSchema = z.object({
-    matrix: z.array(z.array(z.number())), // Transformation matrix if needed
-    quadrants: z.array(pointCalibrationSchema).optional(), // Calibration points
-    scaleX: z.number().default(1),
-    scaleY: z.number().default(1),
-    offsetX: z.number().default(0),
-    offsetY: z.number().default(0),
-});
+/**
+ * Forma persistida en BD. Permitimos `null` para representar "sin calibración".
+ *
+ * La compatibilidad legacy se rompe a propósito: shapes antiguos NO validarán.
+ */
+export const storedCalibrationSchema = calibrationConfigSchema.nullable();
 
 export const devicePreferencesSchema = z.object({
     soundVolume: z.number().min(0).max(100).default(50),
@@ -25,7 +30,7 @@ export const devicePreferencesSchema = z.object({
 });
 
 export const deviceConfigSchema = z.object({
-    calibration: deviceCalibrationSchema,
+    calibration: storedCalibrationSchema,
     preferences: devicePreferencesSchema,
 });
 

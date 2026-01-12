@@ -10,7 +10,32 @@ import { transformCoordinates } from "@/lib/game/calibration";
 import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
 import { cn } from "@/lib/utils";
 
-export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasProps) {
+function getAutoCalibrationFromRect(rect: DOMRect): CalibrationConfig {
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const minDim = Math.min(rect.width, rect.height);
+    const outerRadiusPx = (minDim / 2) * 0.95;
+    const scoringRadiusPx = outerRadiusPx * 0.84;
+
+    const scale = scoringRadiusPx / BOARD_DIMENSIONS_MM.DOUBLE_OUTER_R;
+
+    return {
+        centerX,
+        centerY,
+        scale,
+        rotation: 0,
+    };
+}
+
+function isCalibrationCompatibleWithRect(calibration: CalibrationConfig, rect: DOMRect): boolean {
+    if (!calibration.aspectRatio) return true;
+
+    const current = rect.width / rect.height;
+    return Math.abs(current - calibration.aspectRatio) <= 0.05;
+}
+
+export function DartboardCanvas({ onThrow, calibration, disabled = false }: DartboardCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [hitMarkers, setHitMarkers] = useState<DartboardCanvasMarker[]>([]);
@@ -264,24 +289,10 @@ export function DartboardCanvas({ onThrow, disabled = false }: DartboardCanvasPr
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
 
-        // Auto-configure calibration based on current responsive size
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        // Assume the board fits within the smaller dimension with some margin
-        const minDim = Math.min(rect.width, rect.height);
-        const outerRadiusPx = (minDim / 2) * 0.95;
-        const scoringRadiusPx = outerRadiusPx * 0.84;
-
-        // Scale = pixels per mm
-        const scale = scoringRadiusPx / BOARD_DIMENSIONS_MM.DOUBLE_OUTER_R;
-
-        const config: CalibrationConfig = {
-            centerX,
-            centerY,
-            scale,
-            rotation: 0,
-        };
+        let config = getAutoCalibrationFromRect(rect);
+        if (calibration && isCalibrationCompatibleWithRect(calibration, rect)) {
+            config = calibration;
+        }
 
         const boardCoords = transformCoordinates(clickX, clickY, config);
         const hit = mapCoordinatesToHit(boardCoords.x, boardCoords.y);

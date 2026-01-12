@@ -77,11 +77,11 @@ export function AdminSidebar({ title = "Panel" }: AdminSidebarProps) {
 
     const items = [
         { href: "/admin", label: "Inicio", icon: Home },
-        { href: "/admin/account", label: "Cuenta", icon: UserCog },
         { href: "/players", label: "Jugadores", icon: Users },
         { href: "/matches", label: "Partidas", icon: History },
         { href: "/rankings", label: "Clasificación", icon: Trophy },
         { href: "/rules", label: "Reglas", icon: BookOpen },
+        { href: "/admin/account", label: "Cuenta", icon: UserCog },
     ] as const;
 
     async function performLogout(): Promise<void> {

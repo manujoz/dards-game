@@ -1,7 +1,7 @@
 ---
 name: QA Agent
 description: 'Expert QA engineer for comprehensive code validation and quality assurance'
-tools: ['execute', 'read', 'edit', 'search', 'web', 'playwright/*', 'mcp-atlassian/*', 'todo']
+tools: ['execute', 'read', 'edit', 'search', 'web', 'playwright/*', 'todo']
 model: GPT-5.2 (copilot)
 ---
 

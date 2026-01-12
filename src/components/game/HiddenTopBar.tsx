@@ -13,7 +13,7 @@ import { NewGameModal } from "./modals/NewGameModal";
 
 const LAST_GAME_URL_STORAGE_KEY = "dards:lastGameUrl";
 
-export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig = false, onRestartSameConfig }: HiddenTopBarProps) {
+export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig = false, onRestartSameConfig, getBoardRect }: HiddenTopBarProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -134,7 +134,7 @@ export function HiddenTopBar({ defaultShowNewGame = false, canRestartSameConfig 
 
             {/* Modals */}
             <NewGameModal open={showNewGame} onOpenChange={setShowNewGame} />
-            <CalibrationModal open={showCalibration} onOpenChange={setShowCalibration} />
+            <CalibrationModal open={showCalibration} onOpenChange={setShowCalibration} getBoardRect={getBoardRect ?? (() => null)} />
         </>
     );
 }

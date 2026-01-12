@@ -1,6 +1,9 @@
 "use client";
 
-import { createMatch, registerThrowForPlayer } from "@/app/actions/matches";
+import type { GameControllerProps } from "@/types/components/game";
+
+import { getDeviceConfig } from "@/app/actions/device-config";
+import { claimMatchControl, createMatch, forceTakeoverMatch, registerThrowForPlayer } from "@/app/actions/matches";
 import { CheckoutBustOverlay } from "@/components/game/CheckoutBustOverlay";
 import { CricketMarksOverlay } from "@/components/game/CricketMarksOverlay";
 import { DartboardCanvas } from "@/components/game/DartboardCanvas";
@@ -9,20 +12,17 @@ import { GameScoreboard } from "@/components/game/GameScoreboard";
 import { HiddenTopBar } from "@/components/game/HiddenTopBar";
 import { TurnHud } from "@/components/game/TurnHud";
 import { soundManager } from "@/lib/audio/sounds";
-import { BOARD_DIMENSIONS_MM } from "@/lib/game/board-geometry";
-import { transformCoordinates } from "@/lib/game/calibration";
+import { getOrCreateDeviceId } from "@/lib/device/device-id";
 import { GameEngine } from "@/lib/game/game-engine";
 import { getGameLogic } from "@/lib/game/games";
-import { mapCoordinatesToHit } from "@/lib/game/score-mapper";
 import { cn } from "@/lib/utils";
 import type { CreateMatchInput } from "@/lib/validation/matches";
 import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-interface GameControllerProps {
-    initialState: GameState | null;
-}
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const GAME_TYPE_LABELS: Record<GameId, string> = {
     x01: "X01",
@@ -40,14 +40,24 @@ function getGameTypeLabel(id: GameId): string {
 
 export function GameController({ initialState }: GameControllerProps) {
     const [gameState, setGameState] = useState<GameState | null>(initialState);
+    const [deviceCalibration, setDeviceCalibration] = useState<CalibrationConfig | null>(null);
     const isAwaitingNextTurnRef = useRef(false);
+    const isPersistingThrowRef = useRef(false);
+    const [isPersistingThrow, setIsPersistingThrow] = useState(false);
     const [checkoutBustOverlay, setCheckoutBustOverlay] = useState<{ title: string; message: string } | null>(null);
     const [isPaused, setIsPaused] = useState(false);
     const [isPortrait, setIsPortrait] = useState(false);
     const [cricketMarksOpen, setCricketMarksOpen] = useState(false);
     const boardContainerRef = useRef<HTMLDivElement>(null);
-    const [lastScreenHit, setLastScreenHit] = useState<{ x: number; y: number; kind: "hit" | "miss" } | null>(null);
     const [isRestartPending, startRestartTransition] = useTransition();
+    const [lockDialog, setLockDialog] = useState<{ open: boolean; message: string }>(() => ({
+        open: false,
+        message: "Partida controlada por otro dispositivo",
+    }));
+    const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>(() => ({
+        open: false,
+        message: "",
+    }));
 
     const LANDSCAPE_SCOREBOARD_WIDTH_PX = 280;
     let boardMaxSizeStyle: { maxWidth: string; maxHeight: string } | undefined;
@@ -78,63 +88,64 @@ export function GameController({ initialState }: GameControllerProps) {
     }, []);
 
     useEffect(() => {
-        if (!lastScreenHit) return;
-        const t = window.setTimeout(() => setLastScreenHit(null), 350);
-        return () => window.clearTimeout(t);
-    }, [lastScreenHit]);
+        // No-op: markers are handled by DartboardCanvas.
+    }, []);
 
-    function getAutoCalibrationFromRect(rect: DOMRect): CalibrationConfig {
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
+    useEffect(() => {
+        const deviceId = getOrCreateDeviceId();
+        let cancelled = false;
 
-        const minDim = Math.min(rect.width, rect.height);
-        const outerRadiusPx = (minDim / 2) * 0.95;
-        const scoringRadiusPx = outerRadiusPx * 0.84;
+        getDeviceConfig(deviceId).then((res) => {
+            if (cancelled) return;
+            if (res.success && res.data) {
+                setDeviceCalibration(res.data.calibration ?? null);
+                return;
+            }
 
-        const scale = scoringRadiusPx / BOARD_DIMENSIONS_MM.DOUBLE_OUTER_R;
+            setDeviceCalibration(null);
+        });
 
-        return {
-            centerX,
-            centerY,
-            scale,
-            rotation: 0,
+        return () => {
+            cancelled = true;
         };
-    }
+    }, []);
 
-    function handleGlobalPointerDown(e: React.PointerEvent<HTMLElement>) {
+    useEffect(() => {
         if (!gameState) return;
-        if (gameState.status === "completed") return;
-        if (isPaused) return;
-        if (isAwaitingNextTurn) return;
-        if (isAwaitingNextTurnRef.current) return;
 
-        const target = e.target as Element | null;
-        if (target?.closest("[data-no-throw='true']")) return;
+        const deviceId = getOrCreateDeviceId();
+        let cancelled = false;
 
-        const boardEl = boardContainerRef.current;
-        if (!boardEl) return;
+        claimMatchControl({ matchId: gameState.id, deviceId }).then((res) => {
+            if (cancelled) return;
 
-        // Unlock audio on interaction
-        soundManager.unlock();
+            if (!res.success) {
+                if (res.code === "LOCKED_BY_OTHER_DEVICE") {
+                    setLockDialog({
+                        open: true,
+                        message: res.message ?? "Partida controlada por otro dispositivo",
+                    });
+                    return;
+                }
 
-        const rect = boardEl.getBoundingClientRect();
-        const screenX = e.clientX - rect.left;
-        const screenY = e.clientY - rect.top;
+                // En errores genéricos, no bloqueamos de inicio; pero evitamos silencio total.
+                console.error("No se ha podido reclamar el control de la partida", res.message);
+            }
+        });
 
-        const cal = getAutoCalibrationFromRect(rect);
-        const boardCoords = transformCoordinates(screenX, screenY, cal);
-        const hit = mapCoordinatesToHit(boardCoords.x, boardCoords.y);
+        return () => {
+            cancelled = true;
+        };
+    }, [gameState]);
 
-        setLastScreenHit({ x: e.clientX, y: e.clientY, kind: hit.multiplier === 0 ? "miss" : "hit" });
-        handleThrow(hit);
-    }
-
-    const handleThrow = (hit: Hit): boolean => {
+    const handleThrow = (hit: Hit, coordinates?: { x: number; y: number }): boolean => {
         if (!gameState) return false;
         if (gameState.status === "completed") return false;
         if (isAwaitingNextTurn) return false;
         if (isAwaitingNextTurnRef.current) return false;
         if (isPaused) return false;
+        if (lockDialog.open) return false;
+        if (isPersistingThrowRef.current) return false;
 
         // Unlock audio on interaction
         soundManager.unlock();
@@ -195,27 +206,103 @@ export function GameController({ initialState }: GameControllerProps) {
 
         // Persist throw (best-effort). This enables refresh persistence via the loader.
         // NOTE: We currently don't persist exact hit coordinates (x/y) yet; segment/multiplier is enough to replay.
-        registerThrowForPlayer(gameState.id, {
-            playerId: gameState.currentPlayerId,
-            segment: throwResult.hit.segment,
-            multiplier: throwResult.hit.multiplier,
-            x: 0,
-            y: 0,
-            points: throwResult.points,
-            isBust: throwResult.isBust,
-            isWin: throwResult.isWin,
-            isValid: throwResult.isValid,
-            roundIndex: gameState.currentTurn.roundIndex,
-            throwIndex,
-        }).then((res) => {
-            if (!res.success) {
-                console.error("No se ha podido guardar el lanzamiento", res.message);
+        const deviceId = getOrCreateDeviceId();
+        const previousState = gameState;
+        isPersistingThrowRef.current = true;
+        setIsPersistingThrow(true);
+
+        void (async () => {
+            try {
+                const res = await registerThrowForPlayer(gameState.id, {
+                    deviceId,
+                    playerId: gameState.currentPlayerId,
+                    segment: throwResult.hit.segment,
+                    multiplier: throwResult.hit.multiplier,
+                    x: coordinates?.x ?? 0,
+                    y: coordinates?.y ?? 0,
+                    points: throwResult.points,
+                    isBust: throwResult.isBust,
+                    isWin: throwResult.isWin,
+                    isValid: throwResult.isValid,
+                    roundIndex: gameState.currentTurn.roundIndex,
+                    throwIndex,
+                });
+
+                if (res.success) return;
+
+                // Si el servidor rechaza (lock u otros errores), evitamos divergencia.
+                setGameState(previousState);
+                isAwaitingNextTurnRef.current = false;
+
+                if (res.code === "LOCKED_BY_OTHER_DEVICE") {
+                    setLockDialog({
+                        open: true,
+                        message: res.message ?? "Partida controlada por otro dispositivo",
+                    });
+                    return;
+                }
+
+                setErrorDialog({
+                    open: true,
+                    message: res.message ?? "No se ha podido guardar el lanzamiento",
+                });
+            } catch (error: unknown) {
+                setGameState(previousState);
+                isAwaitingNextTurnRef.current = false;
+                console.error("Error inesperado al guardar el lanzamiento", error);
+            } finally {
+                isPersistingThrowRef.current = false;
+                setIsPersistingThrow(false);
             }
-        });
+        })();
 
         setGameState(newState);
         return true;
     };
+
+    function handleTryClaimControl() {
+        if (!gameState) return;
+
+        const deviceId = getOrCreateDeviceId();
+
+        claimMatchControl({ matchId: gameState.id, deviceId }).then((res) => {
+            if (res.success) {
+                setLockDialog((prev) => ({ ...prev, open: false }));
+                return;
+            }
+
+            if (res.code === "LOCKED_BY_OTHER_DEVICE") {
+                setLockDialog({
+                    open: true,
+                    message: res.message ?? "Partida controlada por otro dispositivo",
+                });
+                return;
+            }
+
+            setLockDialog({
+                open: true,
+                message: res.message ?? "No se ha podido reclamar el control",
+            });
+        });
+    }
+
+    function handleForceTakeover() {
+        if (!gameState) return;
+
+        const deviceId = getOrCreateDeviceId();
+
+        forceTakeoverMatch({ matchId: gameState.id, deviceId }).then((res) => {
+            if (res.success) {
+                setLockDialog((prev) => ({ ...prev, open: false }));
+                return;
+            }
+
+            setLockDialog({
+                open: true,
+                message: res.message ?? "No se ha podido tomar el control",
+            });
+        });
+    }
 
     const handleNextTurn = () => {
         if (!gameState) return;
@@ -255,7 +342,7 @@ export function GameController({ initialState }: GameControllerProps) {
     if (!gameState) {
         return (
             <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
-                <HiddenTopBar defaultShowNewGame={true} />
+                <HiddenTopBar defaultShowNewGame={true} getBoardRect={() => boardContainerRef.current?.getBoundingClientRect() ?? null} />
                 <div className="text-white text-xl animate-pulse">Esperando partida...</div>
                 <div className="text-slate-500 mt-2">Crea una nueva partida desde el menú</div>
             </main>
@@ -263,12 +350,43 @@ export function GameController({ initialState }: GameControllerProps) {
     }
 
     return (
-        <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col" onPointerDown={handleGlobalPointerDown}>
+        <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col">
             <HiddenTopBar
                 defaultShowNewGame={false}
                 canRestartSameConfig={gameState.status === "active" || gameState.status === "completed"}
                 onRestartSameConfig={handleRestartSameConfig}
+                getBoardRect={() => boardContainerRef.current?.getBoundingClientRect() ?? null}
             />
+            <Dialog open={lockDialog.open} onOpenChange={(open) => setLockDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Partida bloqueada</DialogTitle>
+                        <DialogDescription>
+                            {lockDialog.message}. Para evitar conflictos, este dispositivo no puede registrar lanzamientos hasta tener el control.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2 sm:justify-end">
+                        <Button variant="outline" onClick={handleTryClaimControl}>
+                            Reintentar
+                        </Button>
+                        <Button onClick={handleForceTakeover}>Tomar control</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Error</DialogTitle>
+                        <DialogDescription>{errorDialog.message}</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button type="button" onClick={() => setErrorDialog({ open: false, message: "" })}>
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <GameEffects gameState={gameState} />
             <CheckoutBustOverlay
                 open={Boolean(checkoutBustOverlay)}
@@ -277,16 +395,6 @@ export function GameController({ initialState }: GameControllerProps) {
                 onClose={() => setCheckoutBustOverlay(null)}
             />
             <CricketMarksOverlay open={cricketMarksOpen} gameState={gameState} onClose={() => setCricketMarksOpen(false)} />
-
-            {lastScreenHit && (
-                <div
-                    className={cn(
-                        "absolute z-40 w-4 h-4 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none",
-                        lastScreenHit.kind === "miss" ? "bg-red-500" : "bg-emerald-400",
-                    )}
-                    style={{ left: lastScreenHit.x, top: lastScreenHit.y }}
-                />
-            )}
 
             {/* HUD Layer */}
             <TurnHud gameState={gameState} />
@@ -310,8 +418,9 @@ export function GameController({ initialState }: GameControllerProps) {
                         <div ref={boardContainerRef} className="w-full h-full aspect-square" style={boardMaxSizeStyle}>
                             <DartboardCanvas
                                 key={`${gameState.currentPlayerId}:${gameState.currentRound}`}
-                                onThrow={(hit) => handleThrow(hit)}
-                                disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused}
+                                onThrow={(hit, coordinates) => handleThrow(hit, coordinates)}
+                                calibration={deviceCalibration}
+                                disabled={gameState.status === "completed" || isAwaitingNextTurn || isPaused || lockDialog.open || isPersistingThrow}
                             />
                         </div>
                     </div>

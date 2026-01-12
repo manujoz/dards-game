@@ -4,7 +4,6 @@ model: GPT-5.2 (copilot)
 description: Analiza una tarea de Jira y crea un plan de implementación detallado.
 ---
 
-#file:../instructions/jira.instructions.md
 #file:../instructions/implementation-planning.instructions.md
 
 
