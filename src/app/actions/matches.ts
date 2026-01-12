@@ -10,6 +10,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdminSession } from "@/lib/auth/require-admin-session";
 import { prisma } from "@/lib/db/prisma";
 import { isLockValid, nextLeaseUntil } from "@/lib/device/device-lock";
+import { finalizeMatchForRankings, recomputeRankingsGlobalAll, recomputeRankingsScope } from "@/lib/rankings/recompute";
+import { createVariantKey } from "@/lib/rankings/variant-key";
 import { createMatchSchema, type CreateMatchInput } from "@/lib/validation/matches";
 
 function isUnauthorized(error: unknown): boolean {
@@ -547,6 +549,14 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
             return createdThrow;
         });
 
+        if (newThrow.isWin) {
+            try {
+                await finalizeMatchForRankings(matchId);
+            } catch (error) {
+                console.error("Error al finalizar rankings tras registrar un tiro ganador:", error);
+            }
+        }
+
         revalidatePath("/matches");
         revalidatePath("/game");
 
@@ -648,6 +658,31 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
                 success: false,
                 message: "No hay tiros para deshacer",
             };
+        }
+
+        if (deletedThrow.isWin) {
+            try {
+                const match = await prisma.match.findUnique({
+                    where: {
+                        id: matchId,
+                    },
+                    select: {
+                        gameId: true,
+                        variant: true,
+                    },
+                });
+
+                if (match) {
+                    await recomputeRankingsScope({
+                        gameId: match.gameId,
+                        variantKey: createVariantKey(match.gameId, match.variant),
+                    });
+
+                    await recomputeRankingsGlobalAll();
+                }
+            } catch (error) {
+                console.error("Error al recomputar rankings tras deshacer un tiro ganador:", error);
+            }
         }
 
         revalidatePath("/matches");
@@ -844,6 +879,24 @@ export async function undoAbortMatch(matchId: string): Promise<ActionResponse<vo
             };
         }
 
+        try {
+            const match = await prisma.match.findUnique({
+                where: {
+                    id: matchId,
+                },
+                select: {
+                    status: true,
+                },
+            });
+
+            if (match?.status === "completed") {
+                await finalizeMatchForRankings(matchId);
+                await recomputeRankingsGlobalAll();
+            }
+        } catch (error) {
+            console.error("Error al finalizar rankings tras deshacer abortado:", error);
+        }
+
         revalidatePath("/matches");
         revalidatePath("/game");
 
@@ -1000,6 +1053,14 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
 
             return createdThrow;
         });
+
+        if (newThrow.isWin) {
+            try {
+                await finalizeMatchForRankings(matchId);
+            } catch (error) {
+                console.error("Error al finalizar rankings tras registrar un tiro ganador (por jugador):", error);
+            }
+        }
 
         revalidatePath("/matches");
         revalidatePath("/game");
