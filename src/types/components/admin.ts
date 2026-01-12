@@ -24,6 +24,11 @@ export interface PlayerRowActionsProps {
     player: Player;
 }
 
+export interface MatchRowActionsProps {
+    matchId: string;
+    status: string;
+}
+
 export interface AdminSidebarProps {
     title?: string;
 }

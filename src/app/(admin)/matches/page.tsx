@@ -1,4 +1,5 @@
 import { getMatches, type MatchListEntry } from "@/app/actions/matches";
+import { MatchRowActions } from "@/components/admin/MatchRowActions";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Trophy } from "lucide-react";
@@ -7,9 +8,30 @@ import type { GameId } from "@/types/models/darts";
 
 export const dynamic = "force-dynamic";
 
-export default async function MatchesPage() {
-    const result = await getMatches();
+type MatchesPageSearchParams = {
+    view?: string;
+};
+
+function getView(searchParams?: MatchesPageSearchParams): "completed" | "ongoing" | "setup" {
+    const view = searchParams?.view;
+    if (view === "ongoing" || view === "setup" || view === "completed") return view;
+    return "completed";
+}
+
+export default async function MatchesPage({ searchParams }: { searchParams?: MatchesPageSearchParams }) {
+    const view = getView(searchParams);
+
+    const result = await getMatches({
+        status: view === "completed" ? ["completed", "aborted"] : view,
+        includeOngoingWithWin: view === "completed",
+    });
     const matches = result.success ? result.data : [];
+
+    const tabs: Array<{ view: "completed" | "ongoing" | "setup"; label: string }> = [
+        { view: "completed", label: "Completadas" },
+        { view: "ongoing", label: "En juego" },
+        { view: "setup", label: "Preparadas" },
+    ];
 
     return (
         <div className="space-y-6">
@@ -18,6 +40,25 @@ export default async function MatchesPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">Partidas</h1>
                     <p className="text-slate-500">Historial de partidas jugadas.</p>
                 </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+                {tabs.map((tab) => {
+                    const isActive = tab.view === view;
+                    const href = tab.view === "completed" ? "/matches" : `/matches?view=${tab.view}`;
+                    return (
+                        <a
+                            key={tab.view}
+                            href={href}
+                            className={
+                                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors " +
+                                (isActive ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")
+                            }
+                        >
+                            {tab.label}
+                        </a>
+                    );
+                })}
             </div>
 
             <div className="rounded-md border bg-white shadow">
@@ -30,12 +71,13 @@ export default async function MatchesPage() {
                                 <th className="h-12 px-4 font-medium">Participantes</th>
                                 <th className="h-12 px-4 font-medium">Ganador</th>
                                 <th className="h-12 px-4 font-medium">Estado</th>
+                                <th className="h-12 px-4 font-medium text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {matches?.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="h-24 text-center text-slate-500">
+                                    <td colSpan={6} className="h-24 text-center text-slate-500">
                                         No se han encontrado partidas.
                                     </td>
                                 </tr>
@@ -122,6 +164,9 @@ function MatchRow({ match }: { match: MatchListEntry }) {
             <td className="px-4 py-3">
                 <StatusBadge status={derivedStatus} />
             </td>
+            <td className="px-4 py-3 text-right">
+                <MatchRowActions matchId={match.id} status={match.status} />
+            </td>
         </tr>
     );
 }
@@ -132,7 +177,7 @@ function StatusBadge({ status }: { status: string }) {
         ongoing: "bg-blue-100 text-blue-700",
         playing: "bg-blue-100 text-blue-700",
         aborted: "bg-red-100 text-red-700",
-        setup: "bg-slate-100 text-slate-700",
+        setup: "bg-amber-100 text-amber-800",
     };
 
     const labels: Record<string, string> = {
@@ -140,7 +185,7 @@ function StatusBadge({ status }: { status: string }) {
         ongoing: "En juego",
         playing: "En juego",
         aborted: "Abortada",
-        setup: "Configuración",
+        setup: "Preparación",
     };
 
     const normalized = status.toLowerCase();

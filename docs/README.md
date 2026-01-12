@@ -41,6 +41,7 @@
 ### [📐 Arquitectura](./architecture/README.md)
 
 - [Motor de Juego](./architecture/game-engine.md) - Flujo de turnos, validación, inmutabilidad
+- [Multi-dispositivo: device lock](./architecture/multiplayer-device-lock.md) - Control por dispositivo (lease/TTL) y reanudación segura
 
 ### [🔌 API](./api/README.md)
 

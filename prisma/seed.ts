@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const DEFAULT_DEVICE_ID = "00000000-0000-0000-0000-000000000000";
+
 async function main() {
     console.log("Seeding database...");
 
@@ -26,18 +28,17 @@ async function main() {
 
     // Ensure Default Device Config exists
     await prisma.deviceConfig.upsert({
-        where: { id: 1 },
+        where: { deviceId: DEFAULT_DEVICE_ID },
         update: {},
         create: {
-            id: 1,
-            calibration: JSON.stringify({
-                centerX: 0.5,
-                centerY: 0.5,
-                radius: 0.4,
-            }),
+            deviceId: DEFAULT_DEVICE_ID,
+            calibration: JSON.stringify(null),
             preferences: JSON.stringify({
-                soundEnabled: true,
+                soundVolume: 50,
+                brightness: 100,
+                language: "es",
                 theme: "dark",
+                animationsEnabled: true,
             }),
         },
     });

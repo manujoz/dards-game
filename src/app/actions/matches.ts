@@ -1,16 +1,48 @@
 "use server";
 
+import { type MatchActionErrorCode, type MatchActionResponse } from "@/types/actions/matches";
 import { type ActionResponse } from "@/types/actions/shared";
-import { type Match, type MatchParticipant, type MatchTeam, type Player, type Throw } from "@prisma/client";
+import { type Match, type MatchParticipant, type MatchTeam, type Player, type Prisma, type Throw } from "@prisma/client";
+import { z } from "zod";
 
 import { revalidatePath } from "next/cache";
 
 import { requireAdminSession } from "@/lib/auth/require-admin-session";
 import { prisma } from "@/lib/db/prisma";
+import { isLockValid, nextLeaseUntil } from "@/lib/device/device-lock";
 import { createMatchSchema, type CreateMatchInput } from "@/lib/validation/matches";
 
 function isUnauthorized(error: unknown): boolean {
     return error instanceof Error && error.message === "No autorizado";
+}
+
+const LOCKED_BY_OTHER_DEVICE_MESSAGE = "Partida controlada por otro dispositivo";
+const MATCH_ALREADY_FINISHED_MESSAGE = "La partida ya está finalizada";
+const LOCKED_BY_OTHER_DEVICE_CODE: MatchActionErrorCode = "LOCKED_BY_OTHER_DEVICE";
+
+function getSafeActionErrorInfo(error: unknown): { message: string; code?: MatchActionErrorCode } | null {
+    if (!(error instanceof Error)) return null;
+
+    if (error.message === LOCKED_BY_OTHER_DEVICE_MESSAGE) {
+        return {
+            message: error.message,
+            code: LOCKED_BY_OTHER_DEVICE_CODE,
+        };
+    }
+
+    if (error.message === MATCH_ALREADY_FINISHED_MESSAGE) {
+        return {
+            message: error.message,
+        };
+    }
+
+    if (error.message === "No se ha encontrado la partida") {
+        return {
+            message: error.message,
+        };
+    }
+
+    return null;
 }
 
 type PublicPlayer = Omit<Player, "password">;
@@ -23,7 +55,6 @@ type WinningThrowInfo = {
     };
 };
 
-// Extended types for return values including relations (sin exponer password)
 export type MatchWithDetails = Match & {
     teams: MatchTeam[];
     participants: (MatchParticipant & { player: PublicPlayer })[];
@@ -36,15 +67,59 @@ export type MatchListEntry = Match & {
     winningThrows: WinningThrowInfo[];
 };
 
-export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEntry[]>> {
+type GetMatchesOptions = {
+    limit?: number;
+    status?: string | string[];
+    includeOngoingWithWin?: boolean;
+};
+
+export async function getMatches(options: number | GetMatchesOptions = 50): Promise<ActionResponse<MatchListEntry[]>> {
     try {
         await requireAdminSession();
 
+        const resolvedOptions: GetMatchesOptions = typeof options === "number" ? { limit: options } : options;
+        const limit = resolvedOptions.limit ?? 50;
+        const status = resolvedOptions.status;
+        const includeOngoingWithWin = resolvedOptions.includeOngoingWithWin ?? false;
+
+        let where: Prisma.MatchWhereInput | undefined;
+        if (status) {
+            const or: Prisma.MatchWhereInput[] = [
+                {
+                    status: Array.isArray(status) ? { in: status } : status,
+                },
+            ];
+
+            if (includeOngoingWithWin) {
+                or.push({
+                    status: "ongoing",
+                    throws: {
+                        some: {
+                            isWin: true,
+                        },
+                    },
+                });
+            }
+
+            where = {
+                OR: or,
+            };
+        }
+
         const matches = await prisma.match.findMany({
             take: limit,
-            orderBy: {
-                startedAt: "desc",
-            },
+            orderBy: [
+                {
+                    lastActivityAt: {
+                        sort: "desc",
+                        nulls: "last",
+                    },
+                },
+                {
+                    startedAt: "desc",
+                },
+            ],
+            where,
             include: {
                 teams: true,
                 participants: {
@@ -108,6 +183,7 @@ export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEn
 }
 
 export type RegisterThrowInput = {
+    deviceId: string;
     participantId: string;
     segment: number;
     multiplier: number; // 1, 2, 3
@@ -120,6 +196,34 @@ export type RegisterThrowInput = {
     roundIndex: number;
     throwIndex: number;
 };
+
+const registerThrowSchema = z.object({
+    deviceId: z.string().uuid(),
+    participantId: z.string().uuid(),
+    segment: z.number().int().min(0).max(25),
+    multiplier: z.number().int().min(0).max(3),
+    x: z.number(),
+    y: z.number(),
+    points: z.number().int().nonnegative().optional(),
+    isBust: z.boolean().optional(),
+    isWin: z.boolean().optional(),
+    isValid: z.boolean().optional(),
+    roundIndex: z.number().int().min(0),
+    throwIndex: z.number().int().min(1).max(3),
+});
+
+const registerThrowForPlayerSchema = registerThrowSchema.omit({ participantId: true }).extend({
+    playerId: z.string().uuid(),
+});
+
+const matchControlSchema = z.object({
+    matchId: z.string().uuid(),
+    deviceId: z.string().uuid(),
+});
+
+const abortMatchSchema = z.object({
+    matchId: z.string().uuid(),
+});
 
 export async function createMatch(input: CreateMatchInput): Promise<ActionResponse<MatchWithDetails>> {
     try {
@@ -174,7 +278,10 @@ export async function createMatch(input: CreateMatchInput): Promise<ActionRespon
                         teamMode: explicitTeams ? "team" : "single",
                         playerCount: playerIds.length,
                     }),
-                    status: "ongoing", // or created/pending
+                    status: "setup",
+                    winnerId: null,
+                    endedAt: null,
+                    lastActivityAt: null,
                 },
             });
 
@@ -280,30 +387,107 @@ export async function getMatch(id: string): Promise<ActionResponse<MatchWithDeta
     }
 }
 
-export async function registerThrow(matchId: string, throwData: RegisterThrowInput): Promise<ActionResponse<Throw>> {
+export async function registerThrow(matchId: string, throwData: RegisterThrowInput): Promise<MatchActionResponse<Throw>> {
     try {
         await requireAdminSession();
 
+        const validated = registerThrowSchema.safeParse(throwData);
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+        const leaseUntil = nextLeaseUntil(now);
+
         // Calculate points if missing
-        const points = throwData.points ?? throwData.segment * throwData.multiplier;
+        const points = validated.data.points ?? validated.data.segment * validated.data.multiplier;
 
         const newThrow = await prisma.$transaction(async (tx) => {
+            const match = await tx.match.findUnique({
+                where: {
+                    id: matchId,
+                },
+                select: {
+                    status: true,
+                    controllerDeviceId: true,
+                    controllerLeaseUntil: true,
+                },
+            });
+
+            if (!match) {
+                throw new Error("No se ha encontrado la partida");
+            }
+
+            if (match.status === "completed" || match.status === "aborted") {
+                throw new Error(MATCH_ALREADY_FINISHED_MESSAGE);
+            }
+
+            if (match.controllerDeviceId && match.controllerDeviceId !== validated.data.deviceId && isLockValid(now, match.controllerLeaseUntil)) {
+                throw new Error(LOCKED_BY_OTHER_DEVICE_MESSAGE);
+            }
+
+            const lockUpdate = await tx.match.updateMany({
+                where: {
+                    id: matchId,
+                    status: {
+                        notIn: ["completed", "aborted"],
+                    },
+                    OR: [
+                        { controllerDeviceId: validated.data.deviceId },
+                        { controllerDeviceId: null },
+                        { controllerLeaseUntil: null },
+                        { controllerLeaseUntil: { lte: now } },
+                    ],
+                },
+                data: {
+                    controllerDeviceId: validated.data.deviceId,
+                    controllerLeaseUntil: leaseUntil,
+                },
+            });
+
+            if (lockUpdate.count === 0) {
+                throw new Error(LOCKED_BY_OTHER_DEVICE_MESSAGE);
+            }
+
             const createdThrow = await tx.throw.create({
                 data: {
                     matchId,
-                    participantId: throwData.participantId,
-                    roundIndex: throwData.roundIndex,
-                    throwIndex: throwData.throwIndex,
-                    segment: throwData.segment,
-                    multiplier: throwData.multiplier,
-                    x: throwData.x,
-                    y: throwData.y,
+                    participantId: validated.data.participantId,
+                    roundIndex: validated.data.roundIndex,
+                    throwIndex: validated.data.throwIndex,
+                    segment: validated.data.segment,
+                    multiplier: validated.data.multiplier,
+                    x: validated.data.x,
+                    y: validated.data.y,
                     points: points,
-                    isBust: throwData.isBust ?? false,
-                    isWin: throwData.isWin ?? false,
-                    isValid: throwData.isValid ?? true,
+                    isBust: validated.data.isBust ?? false,
+                    isWin: validated.data.isWin ?? false,
+                    isValid: validated.data.isValid ?? true,
+                    timestamp: now,
                 },
             });
+
+            const shouldPromoteToOngoing = match.status === "setup";
+            const nextStatus = createdThrow.isWin ? "completed" : shouldPromoteToOngoing ? "ongoing" : undefined;
+
+            const matchUpdateData: {
+                status?: string;
+                lastActivityAt: Date;
+                winnerId?: string | null;
+                endedAt?: Date | null;
+                controllerLeaseUntil: Date;
+            } = {
+                lastActivityAt: createdThrow.timestamp,
+                controllerLeaseUntil: leaseUntil,
+            };
+
+            if (nextStatus) {
+                matchUpdateData.status = nextStatus;
+            }
 
             if (createdThrow.isWin) {
                 const participant = await tx.matchParticipant.findUnique({
@@ -315,19 +499,20 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
                     },
                 });
 
-                if (participant) {
-                    await tx.match.update({
-                        where: {
-                            id: matchId,
-                        },
-                        data: {
-                            status: "completed",
-                            winnerId: participant.playerId,
-                            endedAt: createdThrow.timestamp,
-                        },
-                    });
+                if (!participant) {
+                    throw new Error("No se ha encontrado el participante ganador");
                 }
+
+                matchUpdateData.winnerId = participant.playerId;
+                matchUpdateData.endedAt = createdThrow.timestamp;
             }
+
+            await tx.match.update({
+                where: {
+                    id: matchId,
+                },
+                data: matchUpdateData,
+            });
 
             return createdThrow;
         });
@@ -344,6 +529,15 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
             return {
                 success: false,
                 message: "No autorizado",
+            };
+        }
+
+        const safeError = getSafeActionErrorInfo(error);
+        if (safeError) {
+            return {
+                success: false,
+                message: safeError.message,
+                code: safeError.code,
             };
         }
 
@@ -448,18 +642,91 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
     }
 }
 
+export async function abortMatch(matchId: string): Promise<ActionResponse<void>> {
+    try {
+        await requireAdminSession();
+
+        const validated = abortMatchSchema.safeParse({ matchId });
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+
+        const updated = await prisma.match.updateMany({
+            where: {
+                id: validated.data.matchId,
+                status: {
+                    not: "completed",
+                },
+            },
+            data: {
+                status: "aborted",
+                endedAt: now,
+                winnerId: null,
+                controllerDeviceId: null,
+                controllerLeaseUntil: null,
+                lastActivityAt: now,
+            },
+        });
+
+        if (updated.count === 0) {
+            return {
+                success: false,
+                message: "No se ha podido abortar la partida",
+            };
+        }
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
+        console.error("Error al abortar la partida:", error);
+        return {
+            success: false,
+            message: "No se ha podido abortar la partida",
+        };
+    }
+}
+
 export type RegisterThrowForPlayerInput = Omit<RegisterThrowInput, "participantId"> & {
     playerId: string;
 };
 
-export async function registerThrowForPlayer(matchId: string, throwData: RegisterThrowForPlayerInput): Promise<ActionResponse<Throw>> {
+export async function registerThrowForPlayer(matchId: string, throwData: RegisterThrowForPlayerInput): Promise<MatchActionResponse<Throw>> {
     try {
         await requireAdminSession();
+
+        const validated = registerThrowForPlayerSchema.safeParse(throwData);
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+        const leaseUntil = nextLeaseUntil(now);
 
         const participant = await prisma.matchParticipant.findFirst({
             where: {
                 matchId,
-                playerId: throwData.playerId,
+                playerId: validated.data.playerId,
             },
         });
 
@@ -471,38 +738,102 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
         }
 
         // Calculate points if missing
-        const points = throwData.points ?? throwData.segment * throwData.multiplier;
+        const points = validated.data.points ?? validated.data.segment * validated.data.multiplier;
 
         const newThrow = await prisma.$transaction(async (tx) => {
+            const match = await tx.match.findUnique({
+                where: {
+                    id: matchId,
+                },
+                select: {
+                    status: true,
+                    controllerDeviceId: true,
+                    controllerLeaseUntil: true,
+                },
+            });
+
+            if (!match) {
+                throw new Error("No se ha encontrado la partida");
+            }
+
+            if (match.status === "completed" || match.status === "aborted") {
+                throw new Error(MATCH_ALREADY_FINISHED_MESSAGE);
+            }
+
+            if (match.controllerDeviceId && match.controllerDeviceId !== validated.data.deviceId && isLockValid(now, match.controllerLeaseUntil)) {
+                throw new Error(LOCKED_BY_OTHER_DEVICE_MESSAGE);
+            }
+
+            const lockUpdate = await tx.match.updateMany({
+                where: {
+                    id: matchId,
+                    status: {
+                        notIn: ["completed", "aborted"],
+                    },
+                    OR: [
+                        { controllerDeviceId: validated.data.deviceId },
+                        { controllerDeviceId: null },
+                        { controllerLeaseUntil: null },
+                        { controllerLeaseUntil: { lte: now } },
+                    ],
+                },
+                data: {
+                    controllerDeviceId: validated.data.deviceId,
+                    controllerLeaseUntil: leaseUntil,
+                },
+            });
+
+            if (lockUpdate.count === 0) {
+                throw new Error(LOCKED_BY_OTHER_DEVICE_MESSAGE);
+            }
+
             const createdThrow = await tx.throw.create({
                 data: {
                     matchId,
                     participantId: participant.id,
-                    roundIndex: throwData.roundIndex,
-                    throwIndex: throwData.throwIndex,
-                    segment: throwData.segment,
-                    multiplier: throwData.multiplier,
-                    x: throwData.x,
-                    y: throwData.y,
+                    roundIndex: validated.data.roundIndex,
+                    throwIndex: validated.data.throwIndex,
+                    segment: validated.data.segment,
+                    multiplier: validated.data.multiplier,
+                    x: validated.data.x,
+                    y: validated.data.y,
                     points,
-                    isBust: throwData.isBust ?? false,
-                    isWin: throwData.isWin ?? false,
-                    isValid: throwData.isValid ?? true,
+                    isBust: validated.data.isBust ?? false,
+                    isWin: validated.data.isWin ?? false,
+                    isValid: validated.data.isValid ?? true,
+                    timestamp: now,
                 },
             });
 
-            if (createdThrow.isWin) {
-                await tx.match.update({
-                    where: {
-                        id: matchId,
-                    },
-                    data: {
-                        status: "completed",
-                        winnerId: throwData.playerId,
-                        endedAt: createdThrow.timestamp,
-                    },
-                });
+            const shouldPromoteToOngoing = match.status === "setup";
+            const nextStatus = createdThrow.isWin ? "completed" : shouldPromoteToOngoing ? "ongoing" : undefined;
+
+            const matchUpdateData: {
+                status?: string;
+                lastActivityAt: Date;
+                winnerId?: string | null;
+                endedAt?: Date | null;
+                controllerLeaseUntil: Date;
+            } = {
+                lastActivityAt: createdThrow.timestamp,
+                controllerLeaseUntil: leaseUntil,
+            };
+
+            if (nextStatus) {
+                matchUpdateData.status = nextStatus;
             }
+
+            if (createdThrow.isWin) {
+                matchUpdateData.winnerId = validated.data.playerId;
+                matchUpdateData.endedAt = createdThrow.timestamp;
+            }
+
+            await tx.match.update({
+                where: {
+                    id: matchId,
+                },
+                data: matchUpdateData,
+            });
 
             return createdThrow;
         });
@@ -522,10 +853,242 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
             };
         }
 
+        const safeError = getSafeActionErrorInfo(error);
+        if (safeError) {
+            return {
+                success: false,
+                message: safeError.message,
+                code: safeError.code,
+            };
+        }
+
         console.error("Error al registrar el tiro (por jugador):", error);
         return {
             success: false,
             message: "No se ha podido registrar el tiro",
+        };
+    }
+}
+
+export async function claimMatchControl(input: { matchId: string; deviceId: string }): Promise<MatchActionResponse<void>> {
+    try {
+        await requireAdminSession();
+
+        const validated = matchControlSchema.safeParse(input);
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+        const leaseUntil = nextLeaseUntil(now);
+
+        const match = await prisma.match.findUnique({
+            where: {
+                id: validated.data.matchId,
+            },
+            select: {
+                status: true,
+                controllerDeviceId: true,
+                controllerLeaseUntil: true,
+            },
+        });
+
+        if (!match) {
+            return {
+                success: false,
+                message: "No se ha encontrado la partida",
+            };
+        }
+
+        if (match.status === "completed" || match.status === "aborted") {
+            return {
+                success: false,
+                message: MATCH_ALREADY_FINISHED_MESSAGE,
+            };
+        }
+
+        if (match.controllerDeviceId && match.controllerDeviceId !== validated.data.deviceId && isLockValid(now, match.controllerLeaseUntil)) {
+            return {
+                success: false,
+                message: LOCKED_BY_OTHER_DEVICE_MESSAGE,
+                code: LOCKED_BY_OTHER_DEVICE_CODE,
+            };
+        }
+
+        const updated = await prisma.match.updateMany({
+            where: {
+                id: validated.data.matchId,
+                status: {
+                    notIn: ["completed", "aborted"],
+                },
+                OR: [
+                    { controllerDeviceId: validated.data.deviceId },
+                    { controllerDeviceId: null },
+                    { controllerLeaseUntil: null },
+                    { controllerLeaseUntil: { lte: now } },
+                ],
+            },
+            data: {
+                controllerDeviceId: validated.data.deviceId,
+                controllerLeaseUntil: leaseUntil,
+            },
+        });
+
+        if (updated.count === 0) {
+            return {
+                success: false,
+                message: LOCKED_BY_OTHER_DEVICE_MESSAGE,
+                code: LOCKED_BY_OTHER_DEVICE_CODE,
+            };
+        }
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
+        console.error("Error al reclamar el control de la partida:", error);
+        return {
+            success: false,
+            message: "No se ha podido reclamar el control de la partida",
+        };
+    }
+}
+
+export async function releaseMatchControl(input: { matchId: string; deviceId: string }): Promise<ActionResponse<void>> {
+    try {
+        await requireAdminSession();
+
+        const validated = matchControlSchema.safeParse(input);
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const updated = await prisma.match.updateMany({
+            where: {
+                id: validated.data.matchId,
+                controllerDeviceId: validated.data.deviceId,
+            },
+            data: {
+                controllerDeviceId: null,
+                controllerLeaseUntil: null,
+            },
+        });
+
+        if (updated.count === 0) {
+            return {
+                success: false,
+                message: "No se ha podido liberar el control de la partida",
+            };
+        }
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
+        console.error("Error al liberar el control de la partida:", error);
+        return {
+            success: false,
+            message: "No se ha podido liberar el control de la partida",
+        };
+    }
+}
+
+export async function forceTakeoverMatch(input: { matchId: string; deviceId: string }): Promise<ActionResponse<void>> {
+    try {
+        await requireAdminSession();
+
+        const validated = matchControlSchema.safeParse(input);
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+        const leaseUntil = nextLeaseUntil(now);
+
+        const match = await prisma.match.findUnique({
+            where: {
+                id: validated.data.matchId,
+            },
+            select: {
+                status: true,
+            },
+        });
+
+        if (!match) {
+            return {
+                success: false,
+                message: "No se ha encontrado la partida",
+            };
+        }
+
+        if (match.status === "completed" || match.status === "aborted") {
+            return {
+                success: false,
+                message: MATCH_ALREADY_FINISHED_MESSAGE,
+            };
+        }
+
+        await prisma.match.update({
+            where: {
+                id: validated.data.matchId,
+            },
+            data: {
+                controllerDeviceId: validated.data.deviceId,
+                controllerLeaseUntil: leaseUntil,
+                lastActivityAt: now,
+            },
+        });
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
+        console.error("Error al tomar el control de la partida:", error);
+        return {
+            success: false,
+            message: "No se ha podido tomar el control de la partida",
         };
     }
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import type { GameControllerProps } from "@/types/components/game";
+
+import { getDeviceConfig } from "@/app/actions/device-config";
 import { createMatch, registerThrowForPlayer } from "@/app/actions/matches";
 import { CheckoutBustOverlay } from "@/components/game/CheckoutBustOverlay";
 import { CricketMarksOverlay } from "@/components/game/CricketMarksOverlay";
@@ -9,6 +12,7 @@ import { GameScoreboard } from "@/components/game/GameScoreboard";
 import { HiddenTopBar } from "@/components/game/HiddenTopBar";
 import { TurnHud } from "@/components/game/TurnHud";
 import { soundManager } from "@/lib/audio/sounds";
+import { getOrCreateDeviceId } from "@/lib/device/device-id";
 import { BOARD_DIMENSIONS_MM } from "@/lib/game/board-geometry";
 import { transformCoordinates } from "@/lib/game/calibration";
 import { GameEngine } from "@/lib/game/game-engine";
@@ -19,10 +23,6 @@ import type { CreateMatchInput } from "@/lib/validation/matches";
 import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
-
-interface GameControllerProps {
-    initialState: GameState | null;
-}
 
 const GAME_TYPE_LABELS: Record<GameId, string> = {
     x01: "X01",
@@ -40,6 +40,7 @@ function getGameTypeLabel(id: GameId): string {
 
 export function GameController({ initialState }: GameControllerProps) {
     const [gameState, setGameState] = useState<GameState | null>(initialState);
+    const [deviceCalibration, setDeviceCalibration] = useState<CalibrationConfig | null>(null);
     const isAwaitingNextTurnRef = useRef(false);
     const [checkoutBustOverlay, setCheckoutBustOverlay] = useState<{ title: string; message: string } | null>(null);
     const [isPaused, setIsPaused] = useState(false);
@@ -83,6 +84,25 @@ export function GameController({ initialState }: GameControllerProps) {
         return () => window.clearTimeout(t);
     }, [lastScreenHit]);
 
+    useEffect(() => {
+        const deviceId = getOrCreateDeviceId();
+        let cancelled = false;
+
+        getDeviceConfig(deviceId).then((res) => {
+            if (cancelled) return;
+            if (res.success && res.data) {
+                setDeviceCalibration(res.data.calibration ?? null);
+                return;
+            }
+
+            setDeviceCalibration(null);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     function getAutoCalibrationFromRect(rect: DOMRect): CalibrationConfig {
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
@@ -99,6 +119,13 @@ export function GameController({ initialState }: GameControllerProps) {
             scale,
             rotation: 0,
         };
+    }
+
+    function isCalibrationCompatibleWithRect(calibration: CalibrationConfig, rect: DOMRect): boolean {
+        if (!calibration.aspectRatio) return true;
+
+        const current = rect.width / rect.height;
+        return Math.abs(current - calibration.aspectRatio) <= 0.05;
     }
 
     function handleGlobalPointerDown(e: React.PointerEvent<HTMLElement>) {
@@ -121,7 +148,10 @@ export function GameController({ initialState }: GameControllerProps) {
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
 
-        const cal = getAutoCalibrationFromRect(rect);
+        let cal = getAutoCalibrationFromRect(rect);
+        if (deviceCalibration && isCalibrationCompatibleWithRect(deviceCalibration, rect)) {
+            cal = deviceCalibration;
+        }
         const boardCoords = transformCoordinates(screenX, screenY, cal);
         const hit = mapCoordinatesToHit(boardCoords.x, boardCoords.y);
 
@@ -195,7 +225,9 @@ export function GameController({ initialState }: GameControllerProps) {
 
         // Persist throw (best-effort). This enables refresh persistence via the loader.
         // NOTE: We currently don't persist exact hit coordinates (x/y) yet; segment/multiplier is enough to replay.
+        const deviceId = getOrCreateDeviceId();
         registerThrowForPlayer(gameState.id, {
+            deviceId,
             playerId: gameState.currentPlayerId,
             segment: throwResult.hit.segment,
             multiplier: throwResult.hit.multiplier,
@@ -255,7 +287,7 @@ export function GameController({ initialState }: GameControllerProps) {
     if (!gameState) {
         return (
             <main className="relative w-screen h-screen bg-slate-950 overflow-hidden flex flex-col items-center justify-center">
-                <HiddenTopBar defaultShowNewGame={true} />
+                <HiddenTopBar defaultShowNewGame={true} getBoardRect={() => boardContainerRef.current?.getBoundingClientRect() ?? null} />
                 <div className="text-white text-xl animate-pulse">Esperando partida...</div>
                 <div className="text-slate-500 mt-2">Crea una nueva partida desde el menú</div>
             </main>
@@ -268,6 +300,7 @@ export function GameController({ initialState }: GameControllerProps) {
                 defaultShowNewGame={false}
                 canRestartSameConfig={gameState.status === "active" || gameState.status === "completed"}
                 onRestartSameConfig={handleRestartSameConfig}
+                getBoardRect={() => boardContainerRef.current?.getBoundingClientRect() ?? null}
             />
             <GameEffects gameState={gameState} />
             <CheckoutBustOverlay

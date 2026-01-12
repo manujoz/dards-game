@@ -1,5 +1,15 @@
 import type { GameState, Hit } from "@/types/models/darts";
 
+export interface GameControllerProps {
+    initialState: GameState | null;
+}
+
+export interface CalibrationModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    getBoardRect: () => DOMRect | null;
+}
+
 export interface CheckoutBustOverlayProps {
     open: boolean;
     title: string;
@@ -26,6 +36,7 @@ export interface HiddenTopBarProps {
     defaultShowNewGame?: boolean;
     canRestartSameConfig?: boolean;
     onRestartSameConfig?: () => void;
+    getBoardRect?: () => DOMRect | null;
 }
 
 export interface DartboardCanvasThrowCoordinates {

@@ -23,8 +23,17 @@ model Player {
   @@map("players")
 }
 
+model Device {
+  id         String   @id
+  name       String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@map("devices")
+}
+
 model DeviceConfig {
-  id          Int      @id @default(1)
+  deviceId     String   @id
   calibration String   @default("{}") // JSON
   preferences String   @default("{}") // JSON
   createdAt   DateTime @default(now())
@@ -42,11 +51,17 @@ model Match {
   winnerId  String?
   startedAt DateTime  @default(now())
   endedAt   DateTime?
+  lastActivityAt DateTime?
+
+  controllerDeviceId    String?
+  controllerLeaseUntil  DateTime?
 
   teams        MatchTeam[]
   participants MatchParticipant[]
   throws       Throw[]
 
+  @@index([status])
+  @@index([controllerDeviceId])
   @@map("matches")
 }
 
