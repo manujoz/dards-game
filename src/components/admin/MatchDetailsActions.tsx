@@ -1,17 +1,15 @@
 "use client";
 
-import type { MatchRowActionsProps } from "@/types/components";
+import type { MatchDetailsActionsProps } from "@/types/components";
 
 import { useState, useTransition } from "react";
 
-import { Ban, Copy, Eye, MoreHorizontal, Play, Shield } from "lucide-react";
-import Link from "next/link";
+import { Ban, Copy, Play, RotateCcw, Shield } from "lucide-react";
 
-import { abortMatch, forceTakeoverMatch } from "@/app/actions/matches";
+import { abortMatch, forceTakeoverMatch, undoAbortMatch } from "@/app/actions/matches";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getOrCreateDeviceId } from "@/lib/device/device-id";
 
@@ -20,14 +18,18 @@ function getMatchLink(matchId: string): string {
     return `${window.location.origin}/game?matchId=${matchId}`;
 }
 
-export function MatchRowActions({ matchId, status, detailsHref }: MatchRowActionsProps) {
+export function MatchDetailsActions({ matchId, status }: MatchDetailsActionsProps) {
     const [isPending, startTransition] = useTransition();
     const [abortDialogOpen, setAbortDialogOpen] = useState(false);
     const [abortError, setAbortError] = useState<string | null>(null);
     const [takeoverDialogOpen, setTakeoverDialogOpen] = useState(false);
     const [takeoverError, setTakeoverError] = useState<string | null>(null);
+    const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);
+    const [reactivateError, setReactivateError] = useState<string | null>(null);
 
-    const isFinished = status === "completed" || status === "aborted";
+    const isCompleted = status === "completed";
+    const isAborted = status === "aborted";
+    const isActive = status === "ongoing" || status === "setup";
 
     async function handleCopyLink() {
         const link = getMatchLink(matchId);
@@ -56,14 +58,11 @@ export function MatchRowActions({ matchId, status, detailsHref }: MatchRowAction
     }
 
     function handleAbort() {
-        if (isFinished) return;
         setAbortError(null);
         setAbortDialogOpen(true);
     }
 
     function handleConfirmAbort() {
-        if (isFinished) return;
-
         setAbortError(null);
 
         startTransition(async () => {
@@ -78,14 +77,11 @@ export function MatchRowActions({ matchId, status, detailsHref }: MatchRowAction
     }
 
     function handleTakeover() {
-        if (isFinished) return;
         setTakeoverError(null);
         setTakeoverDialogOpen(true);
     }
 
     function handleConfirmTakeover() {
-        if (isFinished) return;
-
         setTakeoverError(null);
 
         const deviceId = getOrCreateDeviceId();
@@ -101,46 +97,65 @@ export function MatchRowActions({ matchId, status, detailsHref }: MatchRowAction
         });
     }
 
+    function handleReactivate() {
+        setReactivateError(null);
+        setReactivateDialogOpen(true);
+    }
+
+    function handleConfirmReactivate() {
+        setReactivateError(null);
+
+        startTransition(async () => {
+            const res = await undoAbortMatch(matchId);
+            if (res.success) {
+                setReactivateDialogOpen(false);
+                return;
+            }
+
+            setReactivateError(res.message ?? "No se ha podido reactivar la partida");
+        });
+    }
+
+    if (isCompleted) {
+        return <p className="text-sm text-slate-600">La partida está completada. No hay acciones disponibles.</p>;
+    }
+
     return (
-        <>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900" disabled={isPending}>
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Acciones</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                    <DropdownMenuItem asChild>
-                        <Link href={detailsHref} className="flex items-center">
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver detalles
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={handleResume}>
+        <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+                {isActive ? (
+                    <Button type="button" onClick={handleResume} disabled={isPending}>
                         <Play className="mr-2 h-4 w-4" />
                         Reanudar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleCopyLink}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copiar enlace
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={handleTakeover} disabled={isFinished || isPending}>
+                    </Button>
+                ) : null}
+
+                <Button type="button" variant="outline" onClick={handleCopyLink} disabled={isPending}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copiar enlace
+                </Button>
+
+                {isActive ? (
+                    <Button type="button" variant="outline" onClick={handleTakeover} disabled={isPending}>
                         <Shield className="mr-2 h-4 w-4" />
                         Tomar control
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onSelect={handleAbort}
-                        disabled={isFinished || isPending}
-                        className="text-red-600 focus:text-red-600 focus:bg-red-50 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-700"
-                    >
+                    </Button>
+                ) : null}
+
+                {isActive ? (
+                    <Button type="button" variant="destructive" onClick={handleAbort} disabled={isPending}>
                         <Ban className="mr-2 h-4 w-4" />
                         Abortar
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                    </Button>
+                ) : null}
+
+                {isAborted ? (
+                    <Button type="button" onClick={handleReactivate} disabled={isPending}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Reactivar
+                    </Button>
+                ) : null}
+            </div>
 
             <Dialog
                 open={abortDialogOpen}
@@ -164,7 +179,7 @@ export function MatchRowActions({ matchId, status, detailsHref }: MatchRowAction
                         <Button type="button" variant="outline" onClick={() => setAbortDialogOpen(false)} disabled={isPending}>
                             Cancelar
                         </Button>
-                        <Button type="button" variant="destructive" onClick={handleConfirmAbort} disabled={isFinished || isPending}>
+                        <Button type="button" variant="destructive" onClick={handleConfirmAbort} disabled={isPending}>
                             {isPending ? "Abortando…" : "Abortar"}
                         </Button>
                     </DialogFooter>
@@ -193,12 +208,40 @@ export function MatchRowActions({ matchId, status, detailsHref }: MatchRowAction
                         <Button type="button" variant="outline" onClick={() => setTakeoverDialogOpen(false)} disabled={isPending}>
                             Cancelar
                         </Button>
-                        <Button type="button" onClick={handleConfirmTakeover} disabled={isFinished || isPending}>
+                        <Button type="button" onClick={handleConfirmTakeover} disabled={isPending}>
                             {isPending ? "Tomando control…" : "Tomar control"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </>
+
+            <Dialog
+                open={reactivateDialogOpen}
+                onOpenChange={(open) => {
+                    setReactivateDialogOpen(open);
+                    if (!open) setReactivateError(null);
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Reactivar partida</DialogTitle>
+                        <DialogDescription>
+                            Esto reactivará la partida. Si ya tenía lanzamientos, volverá a estado “En juego”; si no tenía, volverá a “Preparadas”.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {reactivateError ? <p className="text-sm text-red-600">{reactivateError}</p> : null}
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setReactivateDialogOpen(false)} disabled={isPending}>
+                            Cancelar
+                        </Button>
+                        <Button type="button" onClick={handleConfirmReactivate} disabled={isPending}>
+                            {isPending ? "Reactivando…" : "Reactivar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }

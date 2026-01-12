@@ -46,6 +46,21 @@ export default async function MatchesPage({ searchParams }: PageProps) {
         return query ? `/matches?${query}` : "/matches";
     }
 
+    function getDetailsHref(matchId: string): string {
+        const params = new URLSearchParams();
+
+        if (resolvedSearchParams.returnTo) {
+            params.set("returnTo", resolvedSearchParams.returnTo);
+        }
+
+        if (view !== "completed") {
+            params.set("view", view);
+        }
+
+        const query = params.toString();
+        return query ? `/matches/${matchId}?${query}` : `/matches/${matchId}`;
+    }
+
     const isCompletedView = view === "completed";
 
     const result = await getMatches({
@@ -111,7 +126,7 @@ export default async function MatchesPage({ searchParams }: PageProps) {
                                     </td>
                                 </tr>
                             ) : (
-                                matches?.map((match) => <MatchRow key={match.id} match={match} view={view} />)
+                                matches?.map((match) => <MatchRow key={match.id} match={match} view={view} detailsHref={getDetailsHref(match.id)} />)
                             )}
                         </tbody>
                     </table>
@@ -135,7 +150,7 @@ function getGameLabel(gameId: string): string {
     return GAME_LABELS[gameId as GameId] ?? gameId.replace(/_/g, " ");
 }
 
-function MatchRow({ match, view }: { match: MatchListEntry; view: "completed" | "ongoing" | "setup" | "aborted" }) {
+function MatchRow({ match, view, detailsHref }: { match: MatchListEntry; view: "completed" | "ongoing" | "setup" | "aborted"; detailsHref: string }) {
     const derivedWinnerId = match.winnerId ?? match.winningThrows?.[0]?.participant?.playerId;
     const derivedStatus = match.status === "ongoing" && derivedWinnerId ? "completed" : match.status;
 
@@ -195,11 +210,16 @@ function MatchRow({ match, view }: { match: MatchListEntry; view: "completed" | 
             </td>
             <td className="px-4 py-3 text-right">
                 {view === "ongoing" || view === "setup" ? (
-                    <MatchRowActions matchId={match.id} status={match.status} />
+                    <MatchRowActions matchId={match.id} status={match.status} detailsHref={detailsHref} />
                 ) : view === "aborted" ? (
-                    <AbortedMatchRowActions matchId={match.id} />
+                    <AbortedMatchRowActions matchId={match.id} detailsHref={detailsHref} />
                 ) : (
-                    <span className="text-slate-400">-</span>
+                    <Link
+                        href={detailsHref}
+                        className="inline-flex items-center justify-center rounded-md border bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                    >
+                        Ver detalles
+                    </Link>
                 )}
             </td>
         </tr>

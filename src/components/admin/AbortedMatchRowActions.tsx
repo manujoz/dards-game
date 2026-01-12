@@ -4,15 +4,16 @@ import type { AbortedMatchRowActionsProps } from "@/types/components";
 
 import { useState, useTransition } from "react";
 
-import { MoreHorizontal, RotateCcw } from "lucide-react";
+import { Eye, MoreHorizontal, RotateCcw } from "lucide-react";
+import Link from "next/link";
 
 import { undoAbortMatch } from "@/app/actions/matches";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-export function AbortedMatchRowActions({ matchId }: AbortedMatchRowActionsProps) {
+export function AbortedMatchRowActions({ matchId, detailsHref }: AbortedMatchRowActionsProps) {
     const [isPending, startTransition] = useTransition();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,6 +47,13 @@ export function AbortedMatchRowActions({ matchId }: AbortedMatchRowActionsProps)
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuItem asChild>
+                        <Link href={detailsHref} className="flex items-center">
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver detalles
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={handleOpen} disabled={isPending}>
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Deshacer abortado
