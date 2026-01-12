@@ -29,6 +29,10 @@ export interface MatchRowActionsProps {
     status: string;
 }
 
+export interface AbortedMatchRowActionsProps {
+    matchId: string;
+}
+
 export interface AdminSidebarProps {
     title?: string;
 }

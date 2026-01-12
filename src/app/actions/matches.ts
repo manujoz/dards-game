@@ -45,8 +45,6 @@ function getSafeActionErrorInfo(error: unknown): { message: string; code?: Match
     return null;
 }
 
-type PublicPlayer = Omit<Player, "password">;
-
 type WinningThrowInfo = {
     participantId: string;
     timestamp: Date;
@@ -57,13 +55,17 @@ type WinningThrowInfo = {
 
 export type MatchWithDetails = Match & {
     teams: MatchTeam[];
-    participants: (MatchParticipant & { player: PublicPlayer })[];
+    participants: (MatchParticipant & { player: Omit<Player, "password"> })[];
     throws: Throw[];
 };
 
-export type MatchListEntry = Match & {
-    teams: MatchTeam[];
-    participants: (MatchParticipant & { player: PublicPlayer })[];
+type MatchListPlayer = Pick<Player, "id" | "nickname" | "avatarUrl">;
+type MatchListParticipant = Pick<MatchParticipant, "id" | "playerId"> & { player: MatchListPlayer };
+type MatchListTeam = Pick<MatchTeam, "id" | "name">;
+
+export type MatchListEntry = Pick<Match, "id" | "gameId" | "status" | "startedAt" | "winnerId" | "lastActivityAt"> & {
+    teams: MatchListTeam[];
+    participants: MatchListParticipant[];
     winningThrows: WinningThrowInfo[];
 };
 
@@ -78,32 +80,46 @@ export async function getMatches(options: number | GetMatchesOptions = 50): Prom
         await requireAdminSession();
 
         const resolvedOptions: GetMatchesOptions = typeof options === "number" ? { limit: options } : options;
-        const limit = resolvedOptions.limit ?? 50;
+        const rawLimit = resolvedOptions.limit ?? 50;
+        const limit = Math.max(1, Math.min(rawLimit, 200));
         const status = resolvedOptions.status;
         const includeOngoingWithWin = resolvedOptions.includeOngoingWithWin ?? false;
 
         let where: Prisma.MatchWhereInput | undefined;
         if (status) {
-            const or: Prisma.MatchWhereInput[] = [
-                {
-                    status: Array.isArray(status) ? { in: status } : status,
-                },
-            ];
-
-            if (includeOngoingWithWin) {
-                or.push({
+            // Special case: "En juego" debe excluir matches ya ganados aunque su status esté desactualizado.
+            if (status === "ongoing" && !includeOngoingWithWin) {
+                where = {
                     status: "ongoing",
+                    winnerId: null,
                     throws: {
-                        some: {
+                        none: {
                             isWin: true,
                         },
                     },
-                });
-            }
+                };
+            } else {
+                const or: Prisma.MatchWhereInput[] = [
+                    {
+                        status: Array.isArray(status) ? { in: status } : status,
+                    },
+                ];
 
-            where = {
-                OR: or,
-            };
+                if (includeOngoingWithWin) {
+                    or.push({
+                        status: "ongoing",
+                        throws: {
+                            some: {
+                                isWin: true,
+                            },
+                        },
+                    });
+                }
+
+                where = {
+                    OR: or,
+                };
+            }
         }
 
         const matches = await prisma.match.findMany({
@@ -120,18 +136,28 @@ export async function getMatches(options: number | GetMatchesOptions = 50): Prom
                 },
             ],
             where,
-            include: {
-                teams: true,
+            select: {
+                id: true,
+                gameId: true,
+                status: true,
+                startedAt: true,
+                winnerId: true,
+                lastActivityAt: true,
+                teams: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
                 participants: {
-                    include: {
+                    select: {
+                        id: true,
+                        playerId: true,
                         player: {
                             select: {
                                 id: true,
                                 nickname: true,
                                 avatarUrl: true,
-                                admin: true,
-                                createdAt: true,
-                                updatedAt: true,
                             },
                         },
                     },
@@ -222,6 +248,10 @@ const matchControlSchema = z.object({
 });
 
 const abortMatchSchema = z.object({
+    matchId: z.string().uuid(),
+});
+
+const undoAbortMatchSchema = z.object({
     matchId: z.string().uuid(),
 });
 
@@ -699,6 +729,139 @@ export async function abortMatch(matchId: string): Promise<ActionResponse<void>>
         return {
             success: false,
             message: "No se ha podido abortar la partida",
+        };
+    }
+}
+
+export async function undoAbortMatch(matchId: string): Promise<ActionResponse<void>> {
+    try {
+        await requireAdminSession();
+
+        const validated = undoAbortMatchSchema.safeParse({ matchId });
+        if (!validated.success) {
+            return {
+                success: false,
+                message: "La validación ha fallado",
+                errors: validated.error.flatten().fieldErrors,
+            };
+        }
+
+        const now = new Date();
+
+        const result = await prisma.$transaction(async (tx) => {
+            const match = await tx.match.findUnique({
+                where: {
+                    id: validated.data.matchId,
+                },
+                select: {
+                    status: true,
+                },
+            });
+
+            if (!match) {
+                return {
+                    ok: false as const,
+                    message: "No se ha encontrado la partida",
+                };
+            }
+
+            if (match.status !== "aborted") {
+                return {
+                    ok: false as const,
+                    message: "La partida no está abortada",
+                };
+            }
+
+            const lastWinningThrow = await tx.throw.findFirst({
+                where: {
+                    matchId: validated.data.matchId,
+                    isWin: true,
+                },
+                orderBy: {
+                    timestamp: "desc",
+                },
+                select: {
+                    timestamp: true,
+                    participant: {
+                        select: {
+                            playerId: true,
+                        },
+                    },
+                },
+            });
+
+            if (lastWinningThrow?.participant?.playerId) {
+                await tx.match.update({
+                    where: {
+                        id: validated.data.matchId,
+                    },
+                    data: {
+                        status: "completed",
+                        endedAt: lastWinningThrow.timestamp,
+                        winnerId: lastWinningThrow.participant.playerId,
+                        controllerDeviceId: null,
+                        controllerLeaseUntil: null,
+                        lastActivityAt: now,
+                    },
+                });
+
+                return {
+                    ok: true as const,
+                };
+            }
+
+            const throwCount = await tx.throw.count({
+                where: {
+                    matchId: validated.data.matchId,
+                },
+            });
+
+            const nextStatus = throwCount > 0 ? "ongoing" : "setup";
+
+            await tx.match.update({
+                where: {
+                    id: validated.data.matchId,
+                },
+                data: {
+                    status: nextStatus,
+                    endedAt: null,
+                    winnerId: null,
+                    controllerDeviceId: null,
+                    controllerLeaseUntil: null,
+                    lastActivityAt: now,
+                },
+            });
+
+            return {
+                ok: true as const,
+            };
+        });
+
+        if (!result.ok) {
+            return {
+                success: false,
+                message: result.message,
+            };
+        }
+
+        revalidatePath("/matches");
+        revalidatePath("/game");
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        if (isUnauthorized(error)) {
+            return {
+                success: false,
+                message: "No autorizado",
+            };
+        }
+
+        console.error("Error al deshacer el abortado de la partida:", error);
+        return {
+            success: false,
+            message: "No se ha podido deshacer el abortado",
         };
     }
 }

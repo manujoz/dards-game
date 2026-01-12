@@ -1,8 +1,10 @@
 import { getMatches, type MatchListEntry } from "@/app/actions/matches";
+import { AbortedMatchRowActions } from "@/components/admin/AbortedMatchRowActions";
 import { MatchRowActions } from "@/components/admin/MatchRowActions";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Trophy } from "lucide-react";
+import Link from "next/link";
 
 import type { GameId } from "@/types/models/darts";
 
@@ -10,27 +12,54 @@ export const dynamic = "force-dynamic";
 
 type MatchesPageSearchParams = {
     view?: string;
+    returnTo?: string;
 };
 
-function getView(searchParams?: MatchesPageSearchParams): "completed" | "ongoing" | "setup" {
+interface PageProps {
+    searchParams: Promise<MatchesPageSearchParams>;
+}
+
+function getView(searchParams: MatchesPageSearchParams): "completed" | "ongoing" | "setup" | "aborted" {
     const view = searchParams?.view;
-    if (view === "ongoing" || view === "setup" || view === "completed") return view;
+    if (view === "ongoing" || view === "setup" || view === "completed" || view === "aborted") return view;
     return "completed";
 }
 
-export default async function MatchesPage({ searchParams }: { searchParams?: MatchesPageSearchParams }) {
-    const view = getView(searchParams);
+export default async function MatchesPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams;
+    const view = getView(resolvedSearchParams);
+
+    const MATCHES_TABLE_LIMIT = 50;
+
+    function getTabHref(nextView: "completed" | "ongoing" | "setup" | "aborted"): string {
+        const params = new URLSearchParams();
+
+        if (resolvedSearchParams.returnTo) {
+            params.set("returnTo", resolvedSearchParams.returnTo);
+        }
+
+        if (nextView !== "completed") {
+            params.set("view", nextView);
+        }
+
+        const query = params.toString();
+        return query ? `/matches?${query}` : "/matches";
+    }
+
+    const isCompletedView = view === "completed";
 
     const result = await getMatches({
-        status: view === "completed" ? ["completed", "aborted"] : view,
-        includeOngoingWithWin: view === "completed",
+        limit: MATCHES_TABLE_LIMIT,
+        status: isCompletedView ? "completed" : view,
+        includeOngoingWithWin: isCompletedView,
     });
     const matches = result.success ? result.data : [];
 
-    const tabs: Array<{ view: "completed" | "ongoing" | "setup"; label: string }> = [
+    const tabs: Array<{ view: "completed" | "ongoing" | "setup" | "aborted"; label: string }> = [
         { view: "completed", label: "Completadas" },
         { view: "ongoing", label: "En juego" },
         { view: "setup", label: "Preparadas" },
+        { view: "aborted", label: "Abortadas" },
     ];
 
     return (
@@ -45,9 +74,9 @@ export default async function MatchesPage({ searchParams }: { searchParams?: Mat
             <div className="flex flex-wrap gap-2">
                 {tabs.map((tab) => {
                     const isActive = tab.view === view;
-                    const href = tab.view === "completed" ? "/matches" : `/matches?view=${tab.view}`;
+                    const href = getTabHref(tab.view);
                     return (
-                        <a
+                        <Link
                             key={tab.view}
                             href={href}
                             className={
@@ -56,7 +85,7 @@ export default async function MatchesPage({ searchParams }: { searchParams?: Mat
                             }
                         >
                             {tab.label}
-                        </a>
+                        </Link>
                     );
                 })}
             </div>
@@ -82,7 +111,7 @@ export default async function MatchesPage({ searchParams }: { searchParams?: Mat
                                     </td>
                                 </tr>
                             ) : (
-                                matches?.map((match) => <MatchRow key={match.id} match={match} />)
+                                matches?.map((match) => <MatchRow key={match.id} match={match} view={view} />)
                             )}
                         </tbody>
                     </table>
@@ -106,7 +135,7 @@ function getGameLabel(gameId: string): string {
     return GAME_LABELS[gameId as GameId] ?? gameId.replace(/_/g, " ");
 }
 
-function MatchRow({ match }: { match: MatchListEntry }) {
+function MatchRow({ match, view }: { match: MatchListEntry; view: "completed" | "ongoing" | "setup" | "aborted" }) {
     const derivedWinnerId = match.winnerId ?? match.winningThrows?.[0]?.participant?.playerId;
     const derivedStatus = match.status === "ongoing" && derivedWinnerId ? "completed" : match.status;
 
@@ -165,7 +194,13 @@ function MatchRow({ match }: { match: MatchListEntry }) {
                 <StatusBadge status={derivedStatus} />
             </td>
             <td className="px-4 py-3 text-right">
-                <MatchRowActions matchId={match.id} status={match.status} />
+                {view === "ongoing" || view === "setup" ? (
+                    <MatchRowActions matchId={match.id} status={match.status} />
+                ) : view === "aborted" ? (
+                    <AbortedMatchRowActions matchId={match.id} />
+                ) : (
+                    <span className="text-slate-400">-</span>
+                )}
             </td>
         </tr>
     );

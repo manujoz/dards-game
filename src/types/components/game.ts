@@ -1,4 +1,4 @@
-import type { GameState, Hit } from "@/types/models/darts";
+import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
 
 export interface GameControllerProps {
     initialState: GameState | null;
@@ -51,5 +51,6 @@ export interface DartboardCanvasMarker {
 
 export interface DartboardCanvasProps {
     onThrow: (hit: Hit, coordinates: DartboardCanvasThrowCoordinates) => boolean;
+    calibration?: CalibrationConfig | null;
     disabled?: boolean;
 }
