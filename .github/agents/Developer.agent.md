@@ -1,7 +1,7 @@
 ---
 name: Developer Agent
 description: Specialist agent for executing implementation plans with phase-by-phase validation and risk assessment
-tools: ['vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read', 'edit', 'search', 'web', 'playwright/*', 'agent', 'mcp-atlassian/*', 'todo']
+tools: ['vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'playwright/*', 'todo']
 handoffs: 
   - label: Continue Next Phase
     agent: Developer Agent

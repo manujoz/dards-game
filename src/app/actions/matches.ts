@@ -15,6 +15,14 @@ function isUnauthorized(error: unknown): boolean {
 
 type PublicPlayer = Omit<Player, "password">;
 
+type WinningThrowInfo = {
+    participantId: string;
+    timestamp: Date;
+    participant: {
+        playerId: string;
+    };
+};
+
 // Extended types for return values including relations (sin exponer password)
 export type MatchWithDetails = Match & {
     teams: MatchTeam[];
@@ -25,6 +33,7 @@ export type MatchWithDetails = Match & {
 export type MatchListEntry = Match & {
     teams: MatchTeam[];
     participants: (MatchParticipant & { player: PublicPlayer })[];
+    winningThrows: WinningThrowInfo[];
 };
 
 export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEntry[]>> {
@@ -52,12 +61,35 @@ export async function getMatches(limit = 50): Promise<ActionResponse<MatchListEn
                         },
                     },
                 },
+                throws: {
+                    where: {
+                        isWin: true,
+                    },
+                    take: 1,
+                    orderBy: {
+                        timestamp: "desc",
+                    },
+                    select: {
+                        participantId: true,
+                        timestamp: true,
+                        participant: {
+                            select: {
+                                playerId: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
+        const listEntries: MatchListEntry[] = matches.map(({ throws: winningThrows, ...rest }) => ({
+            ...rest,
+            winningThrows: winningThrows as WinningThrowInfo[],
+        }));
+
         return {
             success: true,
-            data: matches,
+            data: listEntries,
         };
     } catch (error) {
         if (isUnauthorized(error)) {
@@ -255,24 +287,53 @@ export async function registerThrow(matchId: string, throwData: RegisterThrowInp
         // Calculate points if missing
         const points = throwData.points ?? throwData.segment * throwData.multiplier;
 
-        const newThrow = await prisma.throw.create({
-            data: {
-                matchId,
-                participantId: throwData.participantId,
-                roundIndex: throwData.roundIndex,
-                throwIndex: throwData.throwIndex,
-                segment: throwData.segment,
-                multiplier: throwData.multiplier,
-                x: throwData.x,
-                y: throwData.y,
-                points: points,
-                isBust: throwData.isBust ?? false,
-                isWin: throwData.isWin ?? false,
-                isValid: throwData.isValid ?? true,
-            },
+        const newThrow = await prisma.$transaction(async (tx) => {
+            const createdThrow = await tx.throw.create({
+                data: {
+                    matchId,
+                    participantId: throwData.participantId,
+                    roundIndex: throwData.roundIndex,
+                    throwIndex: throwData.throwIndex,
+                    segment: throwData.segment,
+                    multiplier: throwData.multiplier,
+                    x: throwData.x,
+                    y: throwData.y,
+                    points: points,
+                    isBust: throwData.isBust ?? false,
+                    isWin: throwData.isWin ?? false,
+                    isValid: throwData.isValid ?? true,
+                },
+            });
+
+            if (createdThrow.isWin) {
+                const participant = await tx.matchParticipant.findUnique({
+                    where: {
+                        id: createdThrow.participantId,
+                    },
+                    select: {
+                        playerId: true,
+                    },
+                });
+
+                if (participant) {
+                    await tx.match.update({
+                        where: {
+                            id: matchId,
+                        },
+                        data: {
+                            status: "completed",
+                            winnerId: participant.playerId,
+                            endedAt: createdThrow.timestamp,
+                        },
+                    });
+                }
+            }
+
+            return createdThrow;
         });
 
-        revalidatePath(`/match/${matchId}`);
+        revalidatePath("/matches");
+        revalidatePath("/game");
 
         return {
             success: true,
@@ -298,23 +359,75 @@ export async function undoLastThrow(matchId: string): Promise<ActionResponse<voi
     try {
         await requireAdminSession();
 
-        const lastThrow = await prisma.throw.findFirst({
-            where: { matchId },
-            orderBy: { timestamp: "desc" },
+        const deletedThrow = await prisma.$transaction(async (tx) => {
+            const lastThrow = await tx.throw.findFirst({
+                where: { matchId },
+                orderBy: { timestamp: "desc" },
+            });
+
+            if (!lastThrow) {
+                return null;
+            }
+
+            const removed = await tx.throw.delete({
+                where: { id: lastThrow.id },
+            });
+
+            if (removed.isWin) {
+                const lastWinningThrow = await tx.throw.findFirst({
+                    where: {
+                        matchId,
+                        isWin: true,
+                    },
+                    orderBy: {
+                        timestamp: "desc",
+                    },
+                    include: {
+                        participant: {
+                            select: {
+                                playerId: true,
+                            },
+                        },
+                    },
+                });
+
+                if (lastWinningThrow?.participant?.playerId) {
+                    await tx.match.update({
+                        where: {
+                            id: matchId,
+                        },
+                        data: {
+                            status: "completed",
+                            winnerId: lastWinningThrow.participant.playerId,
+                            endedAt: lastWinningThrow.timestamp,
+                        },
+                    });
+                } else {
+                    await tx.match.update({
+                        where: {
+                            id: matchId,
+                        },
+                        data: {
+                            status: "ongoing",
+                            winnerId: null,
+                            endedAt: null,
+                        },
+                    });
+                }
+            }
+
+            return removed;
         });
 
-        if (!lastThrow) {
+        if (!deletedThrow) {
             return {
                 success: false,
                 message: "No hay tiros para deshacer",
             };
         }
 
-        await prisma.throw.delete({
-            where: { id: lastThrow.id },
-        });
-
-        revalidatePath(`/match/${matchId}`);
+        revalidatePath("/matches");
+        revalidatePath("/game");
 
         return {
             success: true,
@@ -360,21 +473,38 @@ export async function registerThrowForPlayer(matchId: string, throwData: Registe
         // Calculate points if missing
         const points = throwData.points ?? throwData.segment * throwData.multiplier;
 
-        const newThrow = await prisma.throw.create({
-            data: {
-                matchId,
-                participantId: participant.id,
-                roundIndex: throwData.roundIndex,
-                throwIndex: throwData.throwIndex,
-                segment: throwData.segment,
-                multiplier: throwData.multiplier,
-                x: throwData.x,
-                y: throwData.y,
-                points,
-                isBust: throwData.isBust ?? false,
-                isWin: throwData.isWin ?? false,
-                isValid: throwData.isValid ?? true,
-            },
+        const newThrow = await prisma.$transaction(async (tx) => {
+            const createdThrow = await tx.throw.create({
+                data: {
+                    matchId,
+                    participantId: participant.id,
+                    roundIndex: throwData.roundIndex,
+                    throwIndex: throwData.throwIndex,
+                    segment: throwData.segment,
+                    multiplier: throwData.multiplier,
+                    x: throwData.x,
+                    y: throwData.y,
+                    points,
+                    isBust: throwData.isBust ?? false,
+                    isWin: throwData.isWin ?? false,
+                    isValid: throwData.isValid ?? true,
+                },
+            });
+
+            if (createdThrow.isWin) {
+                await tx.match.update({
+                    where: {
+                        id: matchId,
+                    },
+                    data: {
+                        status: "completed",
+                        winnerId: throwData.playerId,
+                        endedAt: createdThrow.timestamp,
+                    },
+                });
+            }
+
+            return createdThrow;
         });
 
         revalidatePath("/matches");

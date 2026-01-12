@@ -2,7 +2,7 @@
 name: General Agent
 target: vscode
 description: 'Specialized AI agent for general tasks.'
-tools: ['vscode/getProjectSetupInfo', 'vscode/installExtension', 'vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read', 'edit', 'search', 'web', 'io.github.upstash/context7/*', 'playwright/*', 'agent', 'mcp-atlassian/*', 'todo']
+tools: ['vscode/getProjectSetupInfo', 'vscode/installExtension', 'vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'playwright/*', 'io.github.upstash/context7/*', 'todo']
 ---
 
 <role>

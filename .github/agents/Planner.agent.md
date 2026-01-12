@@ -1,7 +1,7 @@
 ---
 name: Planner Agent
 description: Specialist agent for creating detailed, step-by-step implementation plans for development tasks
-tools: ['vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read/problems', 'read/readFile', 'edit', 'search', 'web', 'agent', 'mcp-atlassian/*']
+tools: ['vscode/newWorkspace', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'execute', 'read/problems', 'read/readFile', 'edit', 'search', 'web', 'agent']
 ---
 
 # Implementation Planner Agent
