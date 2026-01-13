@@ -3,13 +3,14 @@ import { MatchDetailsActions } from "@/components/admin/MatchDetailsActions";
 import { MatchDetailsHeader } from "@/components/admin/MatchDetailsHeader";
 import { MatchDetailsScoreboard } from "@/components/admin/MatchDetailsScoreboard";
 import { MatchDetailsThrows } from "@/components/admin/MatchDetailsThrows";
+import { getGameName } from "@/lib/constants/game-names";
 import { getGameLogic } from "@/lib/game/games";
 import { getMatchStateFromDetails } from "@/lib/game/match-state-from-details";
 import { getDisplayRoundIndex, groupThrowsByRound, isZeroBasedRoundIndex } from "@/lib/matches/match-details";
 import { deriveMatchStatus, deriveWinnerId } from "@/lib/matches/match-status";
 
 import type { MatchDetailsThrowItem, MatchDetailsThrowsRound } from "@/types/components";
-import type { GameId, GameState, Scoreboard } from "@/types/models/darts";
+import type { GameState, Scoreboard } from "@/types/models/darts";
 
 export const dynamic = "force-dynamic";
 
@@ -23,18 +24,8 @@ interface PageProps {
     searchParams: Promise<MatchDetailsPageSearchParams>;
 }
 
-const GAME_LABELS: Record<GameId, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    high_score: "Puntuación máxima",
-    shanghai: "Shanghai",
-    killer: "Asesino",
-    halve_it: "A la mitad",
-};
-
 function getGameLabel(gameId: string): string {
-    return GAME_LABELS[gameId as GameId] ?? gameId.replace(/_/g, " ");
+    return getGameName(gameId);
 }
 
 function getBackHref(searchParams: MatchDetailsPageSearchParams): string {

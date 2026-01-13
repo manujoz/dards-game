@@ -22,13 +22,13 @@ export const RULE_GAMES: RuleGameDefinition[] = [
     },
     {
         slug: "round-the-clock",
-        title: "Alrededor del reloj",
+        title: "Round the Clock",
         description: "Avanza del 1 al 20 (y opcionalmente Centro) en orden secuencial.",
         docFileName: "round-the-clock.md",
     },
     {
         slug: "high-score",
-        title: "Puntuación máxima",
+        title: "High Score",
         description: "Suma tantos puntos como puedas durante un número fijo de rondas.",
         docFileName: "high-score.md",
     },
@@ -40,13 +40,13 @@ export const RULE_GAMES: RuleGameDefinition[] = [
     },
     {
         slug: "killer",
-        title: "Asesino",
+        title: "Killer",
         description: "Conviértete en asesino con un doble y elimina rivales reduciendo sus vidas.",
         docFileName: "killer.md",
     },
     {
         slug: "halve-it",
-        title: "A la mitad",
+        title: "Halve It",
         description: "Cumple el objetivo de la ronda o tu puntuación se divide entre 2.",
         docFileName: "halve-it.md",
     },

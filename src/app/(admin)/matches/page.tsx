@@ -1,12 +1,11 @@
 import { getMatches, type MatchListEntry } from "@/app/actions/matches";
 import { AbortedMatchRowActions } from "@/components/admin/AbortedMatchRowActions";
 import { MatchRowActions } from "@/components/admin/MatchRowActions";
+import { getGameName } from "@/lib/constants/game-names";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Trophy } from "lucide-react";
 import Link from "next/link";
-
-import type { GameId } from "@/types/models/darts";
 
 export const dynamic = "force-dynamic";
 
@@ -136,18 +135,8 @@ export default async function MatchesPage({ searchParams }: PageProps) {
     );
 }
 
-const GAME_LABELS: Record<GameId, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    high_score: "Puntuación máxima",
-    shanghai: "Shanghai",
-    killer: "Asesino",
-    halve_it: "A la mitad",
-};
-
 function getGameLabel(gameId: string): string {
-    return GAME_LABELS[gameId as GameId] ?? gameId.replace(/_/g, " ");
+    return getGameName(gameId);
 }
 
 function MatchRow({ match, view, detailsHref }: { match: MatchListEntry; view: "completed" | "ongoing" | "setup" | "aborted"; detailsHref: string }) {

@@ -12,31 +12,18 @@ import { GameScoreboard } from "@/components/game/GameScoreboard";
 import { HiddenTopBar } from "@/components/game/HiddenTopBar";
 import { TurnHud } from "@/components/game/TurnHud";
 import { soundManager } from "@/lib/audio/sounds";
+import { getGameName } from "@/lib/constants/game-names";
 import { getOrCreateDeviceId } from "@/lib/device/device-id";
 import { GameEngine } from "@/lib/game/game-engine";
 import { getGameLogic } from "@/lib/game/games";
 import { cn } from "@/lib/utils";
 import type { CreateMatchInput } from "@/lib/validation/matches";
-import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
+import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-const GAME_TYPE_LABELS: Record<GameId, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    high_score: "Puntuación máxima",
-    shanghai: "Shanghai",
-    killer: "Asesino",
-    halve_it: "A la mitad",
-};
-
-function getGameTypeLabel(id: GameId): string {
-    return GAME_TYPE_LABELS[id] ?? id;
-}
 
 export function GameController({ initialState }: GameControllerProps) {
     const [gameState, setGameState] = useState<GameState | null>(initialState);
@@ -461,7 +448,7 @@ export function GameController({ initialState }: GameControllerProps) {
             {/* Footer / Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-end pointer-events-none">
                 <div className="text-slate-500 text-xs">
-                    <span>{getGameTypeLabel(gameState.config.type)}</span>
+                    <span>{getGameName(gameState.config.type)}</span>
                     <span className="mx-1">•</span>
                     <span>{gameState.players.length} Jugadores</span>
                     <span className="mx-1">•</span>

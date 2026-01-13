@@ -1,4 +1,4 @@
-# High Score (Puntuación Alta)
+# High Score
 
 ## Visión General
 

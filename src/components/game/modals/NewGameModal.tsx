@@ -1,11 +1,13 @@
 "use client";
 
 import type { NewGameModalProps } from "@/types/components/game";
+import type { GameId } from "@/types/models/darts";
 
 import { createMatch } from "@/app/actions/matches";
 import { getPlayers } from "@/app/actions/players";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getGameName } from "@/lib/constants/game-names";
 import { cn } from "@/lib/utils";
 import { CreateMatchInput } from "@/lib/validation/matches";
 import { Player } from "@prisma/client";
@@ -13,17 +15,7 @@ import { Loader2, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-type GameType = "x01" | "cricket" | "round_the_clock" | "killer" | "shanghai" | "high_score" | "halve_it";
-
-const GAME_TYPE_LABELS: Record<GameType, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Round the Clock",
-    killer: "Killer",
-    shanghai: "Shanghai",
-    high_score: "High Score",
-    halve_it: "Halve It",
-};
+type GameType = GameId;
 
 export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -143,7 +135,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                         gameType === type ? "border-primary bg-accent/50" : "border-transparent bg-secondary",
                                     )}
                                 >
-                                    <span className="font-bold uppercase">{GAME_TYPE_LABELS[type]}</span>
+                                    <span className="font-bold uppercase">{getGameName(type)}</span>
                                 </div>
                             ))}
                         </div>

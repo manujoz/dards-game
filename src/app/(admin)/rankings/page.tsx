@@ -1,5 +1,6 @@
 import { getRankingVariants, getRankings } from "@/app/actions/rankings";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getGameName } from "@/lib/constants/game-names";
 import { cn } from "@/lib/utils";
 import type { RankingEntry, RankingGameType } from "@/types/actions/rankings";
 import { Info, Medal, User } from "lucide-react";
@@ -71,13 +72,13 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
             <div>
                 <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
                     <TabLink current={type} target="all" label="Todos" returnTo={returnTo} />
-                    <TabLink current={type} target="x01" label="X01" returnTo={returnTo} />
-                    <TabLink current={type} target="cricket" label="Cricket" returnTo={returnTo} />
-                    <TabLink current={type} target="round_the_clock" label="Round the Clock" returnTo={returnTo} />
-                    <TabLink current={type} target="high_score" label="High Score" returnTo={returnTo} />
-                    <TabLink current={type} target="shanghai" label="Shanghai" returnTo={returnTo} />
-                    <TabLink current={type} target="halve_it" label="Halve It" returnTo={returnTo} />
-                    <TabLink current={type} target="killer" label="Killer" returnTo={returnTo} />
+                    <TabLink current={type} target="x01" label={getGameName("x01")} returnTo={returnTo} />
+                    <TabLink current={type} target="cricket" label={getGameName("cricket")} returnTo={returnTo} />
+                    <TabLink current={type} target="round_the_clock" label={getGameName("round_the_clock")} returnTo={returnTo} />
+                    <TabLink current={type} target="high_score" label={getGameName("high_score")} returnTo={returnTo} />
+                    <TabLink current={type} target="shanghai" label={getGameName("shanghai")} returnTo={returnTo} />
+                    <TabLink current={type} target="halve_it" label={getGameName("halve_it")} returnTo={returnTo} />
+                    <TabLink current={type} target="killer" label={getGameName("killer")} returnTo={returnTo} />
                 </div>
             </div>
 
