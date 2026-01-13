@@ -1,7 +1,8 @@
 import { getRankingVariants, getRankings } from "@/app/actions/rankings";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { RankingEntry, RankingGameType } from "@/types/actions/rankings";
-import { Medal, User } from "lucide-react";
+import { Info, Medal, User } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -135,7 +136,23 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
                                 <th className="h-12 px-4 font-medium text-right">{type === "cricket" ? "Marcas" : "Puntos"}</th>
                                 <th className="h-12 px-4 font-medium text-right">% victorias</th>
                                 <th className="h-12 px-4 font-medium text-right">Partidas</th>
-                                {showPpd ? <th className="h-12 px-4 font-medium text-right">PPD</th> : null}
+                                {showPpd ? (
+                                    <th className="h-12 px-4 font-medium text-right">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span className="inline-flex items-center justify-end gap-1 text-right align-middle">
+                                                        <span>PPD</span>
+                                                        <Info className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent align="end">
+                                                    <p className="max-w-xs">Puntos por dardo válido: puntos agregados / dardos válidos.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </th>
+                                ) : null}
                                 {showMpr ? <th className="h-12 px-4 font-medium text-right">MPR</th> : null}
                             </tr>
                         </thead>
