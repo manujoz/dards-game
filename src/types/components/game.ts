@@ -39,6 +39,11 @@ export interface HiddenTopBarProps {
     getBoardRect?: () => DOMRect | null;
 }
 
+export interface NewGameModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
 export interface DartboardCanvasThrowCoordinates {
     x: number;
     y: number;

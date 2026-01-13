@@ -1,4 +1,4 @@
-# Round the Clock (Alrededor del Reloj)
+# Round the Clock
 
 ## Visión General
 

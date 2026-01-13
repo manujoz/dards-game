@@ -12,31 +12,18 @@ import { GameScoreboard } from "@/components/game/GameScoreboard";
 import { HiddenTopBar } from "@/components/game/HiddenTopBar";
 import { TurnHud } from "@/components/game/TurnHud";
 import { soundManager } from "@/lib/audio/sounds";
+import { getGameName } from "@/lib/constants/game-names";
 import { getOrCreateDeviceId } from "@/lib/device/device-id";
 import { GameEngine } from "@/lib/game/game-engine";
 import { getGameLogic } from "@/lib/game/games";
 import { cn } from "@/lib/utils";
 import type { CreateMatchInput } from "@/lib/validation/matches";
-import type { CalibrationConfig, GameId, GameState, Hit } from "@/types/models/darts";
+import type { CalibrationConfig, GameState, Hit } from "@/types/models/darts";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-const GAME_TYPE_LABELS: Record<GameId, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    high_score: "Puntuación máxima",
-    shanghai: "Shanghai",
-    killer: "Asesino",
-    halve_it: "A la mitad",
-};
-
-function getGameTypeLabel(id: GameId): string {
-    return GAME_TYPE_LABELS[id] ?? id;
-}
 
 export function GameController({ initialState }: GameControllerProps) {
     const [gameState, setGameState] = useState<GameState | null>(initialState);
@@ -113,6 +100,9 @@ export function GameController({ initialState }: GameControllerProps) {
     useEffect(() => {
         if (!gameState) return;
 
+        // Si la partida ya está finalizada, no tiene sentido reclamar control.
+        if (gameState.status === "completed" || gameState.status === "aborted") return;
+
         const deviceId = getOrCreateDeviceId();
         let cancelled = false;
 
@@ -128,6 +118,11 @@ export function GameController({ initialState }: GameControllerProps) {
                     return;
                 }
 
+                // Caso esperado: entre cargar estado y reclamar, puede que alguien haya finalizado la partida.
+                if (res.message === "La partida ya está finalizada") {
+                    return;
+                }
+
                 // En errores genéricos, no bloqueamos de inicio; pero evitamos silencio total.
                 console.error("No se ha podido reclamar el control de la partida", res.message);
             }
@@ -136,7 +131,7 @@ export function GameController({ initialState }: GameControllerProps) {
         return () => {
             cancelled = true;
         };
-    }, [gameState]);
+    }, [gameState?.id]);
 
     const handleThrow = (hit: Hit, coordinates?: { x: number; y: number }): boolean => {
         if (!gameState) return false;
@@ -147,22 +142,26 @@ export function GameController({ initialState }: GameControllerProps) {
         if (lockDialog.open) return false;
         if (isPersistingThrowRef.current) return false;
 
+        const rollbackState = structuredClone(gameState);
+
         // Unlock audio on interaction
         soundManager.unlock();
 
-        // 1. Process Logic
-        const gameLogic = getGameLogic(gameState.config.type);
+        const workingState = structuredClone(gameState);
 
-        const currentPlayerStateBefore = gameState.playerStates.find((p) => p.playerId === gameState.currentPlayerId);
+        // 1. Process Logic
+        const gameLogic = getGameLogic(workingState.config.type);
+
+        const currentPlayerStateBefore = workingState.playerStates.find((p) => p.playerId === workingState.currentPlayerId);
         const currentScoreBefore = currentPlayerStateBefore?.score;
 
         // processThrow calculates the result AND mutates player state (score)
-        const throwResult = gameLogic.processThrow(gameState, hit);
+        const throwResult = gameLogic.processThrow(workingState, hit);
 
-        const throwIndex = gameState.currentTurn.throws.length + 1;
+        const throwIndex = workingState.currentTurn.throws.length + 1;
 
         // 2. Add Throw to State
-        const newState = GameEngine.addThrow(gameState, throwResult);
+        const newState = GameEngine.addThrow(workingState, throwResult);
 
         // 3. Sync Turn Score (Since GameEngine doesn't auto-sync endScore for hits)
         const currentPlayerState = newState.playerStates.find((p) => p.playerId === newState.currentPlayerId);
@@ -174,13 +173,13 @@ export function GameController({ initialState }: GameControllerProps) {
         // Turn advancement is now user-confirmed (button) so the HUD can show the 3rd dart/bust.
 
         if (
-            gameState.config.type === "x01" &&
+            workingState.config.type === "x01" &&
             typeof currentScoreBefore === "number" &&
             throwResult.isBust &&
             !throwResult.isWin &&
             currentScoreBefore - throwResult.points === 0
         ) {
-            const outMode = gameState.config.outMode;
+            const outMode = workingState.config.outMode;
             let outRule = "";
             if (outMode === "double") {
                 outRule = "Necesitas cerrar con un DOBLE (incluye D-BULL).";
@@ -207,15 +206,14 @@ export function GameController({ initialState }: GameControllerProps) {
         // Persist throw (best-effort). This enables refresh persistence via the loader.
         // NOTE: We currently don't persist exact hit coordinates (x/y) yet; segment/multiplier is enough to replay.
         const deviceId = getOrCreateDeviceId();
-        const previousState = gameState;
         isPersistingThrowRef.current = true;
         setIsPersistingThrow(true);
 
         void (async () => {
             try {
-                const res = await registerThrowForPlayer(gameState.id, {
+                const res = await registerThrowForPlayer(newState.id, {
                     deviceId,
-                    playerId: gameState.currentPlayerId,
+                    playerId: newState.currentPlayerId,
                     segment: throwResult.hit.segment,
                     multiplier: throwResult.hit.multiplier,
                     x: coordinates?.x ?? 0,
@@ -224,14 +222,15 @@ export function GameController({ initialState }: GameControllerProps) {
                     isBust: throwResult.isBust,
                     isWin: throwResult.isWin,
                     isValid: throwResult.isValid,
-                    roundIndex: gameState.currentTurn.roundIndex,
+                    roundIndex: newState.currentTurn.roundIndex,
                     throwIndex,
                 });
 
                 if (res.success) return;
 
                 // Si el servidor rechaza (lock u otros errores), evitamos divergencia.
-                setGameState(previousState);
+                setGameState(rollbackState);
+                setCheckoutBustOverlay(null);
                 isAwaitingNextTurnRef.current = false;
 
                 if (res.code === "LOCKED_BY_OTHER_DEVICE") {
@@ -247,7 +246,8 @@ export function GameController({ initialState }: GameControllerProps) {
                     message: res.message ?? "No se ha podido guardar el lanzamiento",
                 });
             } catch (error: unknown) {
-                setGameState(previousState);
+                setGameState(rollbackState);
+                setCheckoutBustOverlay(null);
                 isAwaitingNextTurnRef.current = false;
                 console.error("Error inesperado al guardar el lanzamiento", error);
             } finally {
@@ -307,6 +307,7 @@ export function GameController({ initialState }: GameControllerProps) {
     const handleNextTurn = () => {
         if (!gameState) return;
         if (!isAwaitingNextTurn) return;
+        if (isPersistingThrowRef.current) return;
         isAwaitingNextTurnRef.current = false;
         setGameState(GameEngine.nextTurn(gameState));
     };
@@ -396,6 +397,12 @@ export function GameController({ initialState }: GameControllerProps) {
             />
             <CricketMarksOverlay open={cricketMarksOpen} gameState={gameState} onClose={() => setCricketMarksOpen(false)} />
 
+            {isPersistingThrow && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+                    <div className="text-xs text-slate-400/70">Guardando…</div>
+                </div>
+            )}
+
             {/* HUD Layer */}
             <TurnHud gameState={gameState} />
 
@@ -441,14 +448,14 @@ export function GameController({ initialState }: GameControllerProps) {
             {/* Footer / Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between items-end pointer-events-none">
                 <div className="text-slate-500 text-xs">
-                    <span>{getGameTypeLabel(gameState.config.type)}</span>
+                    <span>{getGameName(gameState.config.type)}</span>
                     <span className="mx-1">•</span>
                     <span>{gameState.players.length} Jugadores</span>
                     <span className="mx-1">•</span>
                     <span>Ronda {gameState.currentRound}</span>
                 </div>
 
-                {isAwaitingNextTurn && (
+                {isAwaitingNextTurn && !isPersistingThrow && (
                     <div className="pointer-events-auto">
                         <button
                             type="button"

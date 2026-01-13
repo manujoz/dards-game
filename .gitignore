@@ -6,6 +6,9 @@ node_modules
 .env.*
 !.env.example
 
+# Next.js (autogenerado)
+next-env.d.ts
+
 npm-debug.log*
 
 # SQLite (desarrollo local)

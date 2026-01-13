@@ -1,9 +1,13 @@
 "use client";
 
+import type { NewGameModalProps } from "@/types/components/game";
+import type { GameId } from "@/types/models/darts";
+
 import { createMatch } from "@/app/actions/matches";
 import { getPlayers } from "@/app/actions/players";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getGameName } from "@/lib/constants/game-names";
 import { cn } from "@/lib/utils";
 import { CreateMatchInput } from "@/lib/validation/matches";
 import { Player } from "@prisma/client";
@@ -11,21 +15,7 @@ import { Loader2, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-type GameType = "x01" | "cricket" | "round_the_clock" | "killer" | "shanghai" | "high_score";
-
-const GAME_TYPE_LABELS: Record<GameType, string> = {
-    x01: "X01",
-    cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    killer: "Asesino",
-    shanghai: "Shanghai",
-    high_score: "Puntuación máxima",
-};
-
-interface NewGameModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
+type GameType = GameId;
 
 export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -94,6 +84,12 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                 config = { ...baseConfig, type: "shanghai", startNumber: 1 };
             } else if (gameType === "high_score") {
                 config = { ...baseConfig, type: "high_score", targetScore: 1000 };
+            } else if (gameType === "halve_it") {
+                config = {
+                    ...baseConfig,
+                    type: "halve_it",
+                    targets: ["20", "16", "D7", "14", "18", "T10", "25"],
+                };
             } else {
                 return; // Should not happen
             }
@@ -129,7 +125,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                             Modo de juego
                         </label>
                         <div className="grid grid-cols-3 gap-3">
-                            {(["x01", "cricket", "round_the_clock", "killer", "shanghai", "high_score"] as GameType[]).map((type) => (
+                            {(["x01", "cricket", "round_the_clock", "high_score", "shanghai", "halve_it", "killer"] as GameType[]).map((type) => (
                                 <div
                                     key={type}
                                     onClick={() => setGameType(type)}
@@ -139,7 +135,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                                         gameType === type ? "border-primary bg-accent/50" : "border-transparent bg-secondary",
                                     )}
                                 >
-                                    <span className="font-bold uppercase">{GAME_TYPE_LABELS[type]}</span>
+                                    <span className="font-bold uppercase">{getGameName(type)}</span>
                                 </div>
                             ))}
                         </div>

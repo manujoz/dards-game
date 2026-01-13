@@ -19,6 +19,9 @@ model Player {
   updatedAt DateTime @updatedAt
 
   participations MatchParticipant[]
+  modeStats      PlayerModeStats[]
+  modeRatings    PlayerModeRating[]
+  matchResults   MatchResult[]
 
   @@map("players")
 }
@@ -59,6 +62,7 @@ model Match {
   teams        MatchTeam[]
   participants MatchParticipant[]
   throws       Throw[]
+  results      MatchResult[]
 
   @@index([status])
   @@index([controllerDeviceId])
@@ -93,6 +97,7 @@ model MatchParticipant {
   team   MatchTeam? @relation(fields: [teamId], references: [id])
   player Player     @relation(fields: [playerId], references: [id])
   throws Throw[]
+  results MatchResult[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -122,4 +127,72 @@ model Throw {
   @@index([matchId])
   @@index([participantId])
   @@map("throws")
+}
+
+model PlayerModeStats {
+  id          String   @id @default(uuid())
+  playerId    String
+  gameId      String
+  variantKey  String
+  matchesPlayed Int    @default(0)
+  matchesWon    Int    @default(0)
+  dartsValid    Int    @default(0)
+  pointsValid   Int    @default(0)
+  marks         Int?
+  roundsPlayed  Int    @default(0)
+  lastMatchAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, gameId, variantKey])
+  @@index([gameId, variantKey])
+  @@index([playerId])
+  @@map("player_mode_stats")
+}
+
+model PlayerModeRating {
+  id           String   @id @default(uuid())
+  playerId     String
+  gameId       String
+  variantKey   String
+  ratingElo    Int      @default(1500)
+  matchesPlayed Int     @default(0)
+  lastMatchAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, gameId, variantKey])
+  @@index([gameId, variantKey])
+  @@index([playerId])
+  @@map("player_mode_ratings")
+}
+
+model MatchResult {
+  id            String   @id @default(uuid())
+  matchId       String
+  participantId String
+  playerId      String
+  gameId        String
+  variantKey    String
+  isWin         Boolean @default(false)
+  dartsValid    Int     @default(0)
+  pointsValid   Int     @default(0)
+  marks         Int?
+  roundsPlayed  Int     @default(0)
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
+
+  match       Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  participant MatchParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  player      Player           @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, participantId])
+  @@index([gameId, variantKey])
+  @@index([playerId])
+  @@index([matchId])
+  @@map("match_results")
 }
