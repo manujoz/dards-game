@@ -117,9 +117,6 @@ export default async function RankingsPage(props: { searchParams: Promise<{ type
                                     </Link>
                                 ) : null}
                             </div>
-                            {!requestedVariantKey ? (
-                                <p className="text-xs text-slate-500">Mostrando una variante por defecto. Usa el filtro para fijarla en la URL.</p>
-                            ) : null}
                         </div>
 
                         {result.success ? null : <p className="text-sm text-slate-600">No se han podido cargar los rankings.</p>}

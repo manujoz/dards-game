@@ -54,7 +54,9 @@ const killerConfigSchema = baseGameConfigSchema.extend({
 // Halve It
 const halveItConfigSchema = baseGameConfigSchema.extend({
     type: z.literal("halve_it"),
-    rounds: z.array(z.string()).optional(), // specific targets like "20", "19", "Double", etc.
+    // Targets codificados, p.ej. "20", "D7", "T10", "25".
+    // Nota: debe alinearse con `HalveItConfig.targets` en `src/types/models/darts.ts` y con `HalveItGame`.
+    targets: z.array(z.string()).min(1).optional(),
 });
 
 export const gameConfigSchema = z.discriminatedUnion("type", [

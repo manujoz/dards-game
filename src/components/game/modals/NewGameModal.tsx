@@ -1,5 +1,7 @@
 "use client";
 
+import type { NewGameModalProps } from "@/types/components/game";
+
 import { createMatch } from "@/app/actions/matches";
 import { getPlayers } from "@/app/actions/players";
 import { Button } from "@/components/ui/button";
@@ -11,21 +13,17 @@ import { Loader2, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-type GameType = "x01" | "cricket" | "round_the_clock" | "killer" | "shanghai" | "high_score";
+type GameType = "x01" | "cricket" | "round_the_clock" | "killer" | "shanghai" | "high_score" | "halve_it";
 
 const GAME_TYPE_LABELS: Record<GameType, string> = {
     x01: "X01",
     cricket: "Cricket",
-    round_the_clock: "Alrededor del reloj",
-    killer: "Asesino",
+    round_the_clock: "Round the Clock",
+    killer: "Killer",
     shanghai: "Shanghai",
-    high_score: "Puntuación máxima",
+    high_score: "High Score",
+    halve_it: "Halve It",
 };
-
-interface NewGameModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
 
 export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -94,6 +92,12 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                 config = { ...baseConfig, type: "shanghai", startNumber: 1 };
             } else if (gameType === "high_score") {
                 config = { ...baseConfig, type: "high_score", targetScore: 1000 };
+            } else if (gameType === "halve_it") {
+                config = {
+                    ...baseConfig,
+                    type: "halve_it",
+                    targets: ["20", "16", "D7", "14", "18", "T10", "25"],
+                };
             } else {
                 return; // Should not happen
             }
@@ -129,7 +133,7 @@ export function NewGameModal({ open, onOpenChange }: NewGameModalProps) {
                             Modo de juego
                         </label>
                         <div className="grid grid-cols-3 gap-3">
-                            {(["x01", "cricket", "round_the_clock", "killer", "shanghai", "high_score"] as GameType[]).map((type) => (
+                            {(["x01", "cricket", "round_the_clock", "high_score", "shanghai", "halve_it", "killer"] as GameType[]).map((type) => (
                                 <div
                                     key={type}
                                     onClick={() => setGameType(type)}
