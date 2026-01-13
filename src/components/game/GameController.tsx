@@ -113,6 +113,9 @@ export function GameController({ initialState }: GameControllerProps) {
     useEffect(() => {
         if (!gameState) return;
 
+        // Si la partida ya está finalizada, no tiene sentido reclamar control.
+        if (gameState.status === "completed" || gameState.status === "aborted") return;
+
         const deviceId = getOrCreateDeviceId();
         let cancelled = false;
 
@@ -128,6 +131,11 @@ export function GameController({ initialState }: GameControllerProps) {
                     return;
                 }
 
+                // Caso esperado: entre cargar estado y reclamar, puede que alguien haya finalizado la partida.
+                if (res.message === "La partida ya está finalizada") {
+                    return;
+                }
+
                 // En errores genéricos, no bloqueamos de inicio; pero evitamos silencio total.
                 console.error("No se ha podido reclamar el control de la partida", res.message);
             }
@@ -136,7 +144,7 @@ export function GameController({ initialState }: GameControllerProps) {
         return () => {
             cancelled = true;
         };
-    }, [gameState]);
+    }, [gameState?.id]);
 
     const handleThrow = (hit: Hit, coordinates?: { x: number; y: number }): boolean => {
         if (!gameState) return false;
